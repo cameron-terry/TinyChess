@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <script src="js/jquery-3.3.1.min.js"></script>
+        <script src="js/jquery-ui.min.js"></script>
+        <script src="js/ai.js"></script>
+        <script src="js/defs.js"></script>
+        <script src="js/board.js"></script>
+        <script src="js/gui.js"></script>
+        <script src="js/makemove.js"></script>
+
+
+        <link rel="stylesheet" href="css/styles.css">
+
+        <title>TinyChess</title>
+    </head>
+
+    <body>
+        <div id="container" style="display: flex;">
+            <div id="chessboard" style="float: left;">
+                <div>
+                    <div class="white_square">
+                        <img id="a6" src="img/blank.gif"/>
+                    </div>
+                    <div class="black_square">
+                        <img id="b6" src="img/blank.gif"/>
+                    </div>
+                    <div class="white_square">
+                        <img id="c6" src="img/blank.gif"/>
+                    </div>
+                    <div class="black_square">
+                        <img id="d6" src="img/blank.gif"/>
+                    </div>
+                </div>
+                <div>
+                    <div class="black_square">
+                        <img id="a5" src="img/blank.gif"/>
+                    </div>
+                    <div class="white_square">
+                        <img id="b5" src="img/blank.gif"/>
+                    </div>
+                    <div class="black_square">
+                        <img id="c5" src="img/blank.gif"/>
+                    </div>
+                    <div class="white_square">
+                        <img id="d5" src="img/blank.gif"/>
+                    </div>
+                </div>
+                <div>
+                    <div class="white_square">
+                        <img id="a4" src="img/blank.gif"/>
+                    </div>
+                    <div class="black_square">
+                        <img id="b4" src="img/blank.gif"/>
+                    </div>
+                    <div class="white_square">
+                        <img id="c4" src="img/blank.gif"/>
+                    </div>
+                    <div class="black_square">
+                        <img id="d4" src="img/blank.gif"/>
+                    </div>
+                </div>
+                <div>
+                    <div class="black_square">
+                        <img id="a3" src="img/blank.gif"/>
+                    </div>
+                    <div class="white_square">
+                        <img id="b3" src="img/blank.gif"/>
+                    </div>
+                    <div class="black_square">
+                        <img id="c3" src="img/blank.gif"/>
+                    </div>
+                    <div class="white_square">
+                        <img id="d3" src="img/blank.gif"/>
+                    </div>
+                </div>
+                <div>
+                    <div class="white_square">
+                        <img id="a2" src="img/blank.gif"/>
+                    </div>
+                    <div class="black_square">
+                        <img id="b2" src="img/blank.gif"/>
+                    </div>
+                    <div class="white_square">
+                        <img id="c2" src="img/blank.gif"/>
+                    </div>
+                    <div class="black_square">
+                        <img id="d2" src="img/blank.gif"/>
+                    </div>
+                </div>
+                <div>
+                    <div class="black_square">
+                        <img id="a1" src="img/blank.gif"/>
+                    </div>
+                    <div class="white_square">
+                        <img id="b1" src="img/blank.gif"/>
+                    </div>
+                    <div class="black_square">
+                        <img id="c1" src="img/blank.gif"/>
+                    </div>
+                    <div class="white_square">
+                        <img id="d1" src="img/blank.gif"/>
+                    </div>
+                </div>
+            </div>
+            <div id="other" class="flex-item">
+                <div id="wrapper" style="background: linear-gradient(to bottom, #442905, #72614c);">
+                    <div id="controls">
+                        <div id="AIControllerHeader">
+                            <strong style="font:12px arial-black; text-align: center;">Computer</strong>
+                        </div>
+                        <div id="AIControllerBody">
+                            <select id="levelSelect">
+                                <option value="0">Level 0</option>
+                                <option value="1">Level 1</option>
+                                <option value="2">Level 2</option>
+                                <option value="3">Level 3</option>
+                                <option value="4">Level 4</option>
+                                <option value="5">Level 5</option>
+                                <option value="6">Level 6</option>
+                                <option value="7">Level 7</option>
+                                <option value="8">Level 8</option>
+                                <option value="9">Level 9</option>
+                                <option value="10">Level 10</option>
+                            </select>
+                            <img id="lightbulb" src="img/lightbulb.png"/>
+                            <label class="switch">
+                                <input type="checkbox">
+                                <span class="slider round"></span>
+                            </label>
+                        </div>
+                        <div id="controlHeader">
+                            <strong style="font:12px arial-black; text-align: center;">Controls</strong>
+                        </div>
+                        <div id="controlBody">
+                            <input type="submit" value="Take Back" style="font-weight: bold;" class="takeBackLastMove"><br />
+                            <input type="submit" value="Reset Game" style="font-weight: bold;" class="resetGame"><br />
+                            <input type="submit" value="Save Game" style="font-weight: bold;" class="saveGameData"><br/>
+                        </div>
+                    </div>
+                    <div id="moveList">
+                        <div style="background: linear-gradient(to right, #a58a54, #594c0d);">
+                            <strong style="font:12px arial-black; text-align: center; padding-left: 30px; ">Move List</strong>
+                        </div>
+                        <div>
+                            <table cellspacing="0" cellpadding="1" border="1" style="background-color: #fff; font-family: SegoeUI, Futura; font-size: 13px;" id="moveListTable">
+                                <tr style="color:black; background: linear-gradient(to right, #aaa, #eee);" id="titles">
+                                    <th><strong>Move</strong></th>
+                                    <th><strong>White</strong></th>
+                                    <th><strong>Black</strong></th>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div id="fenContainer">
+                    <div id="fen">
+                        <div id="fenTitle">
+                            <strong style="padding-left: 2px;">FEN</strong>
+                            <strong><span id="gameState"></span></strong>
+                        </div>
+                        <div id="curFen">
+                            <h3 id="currentFen" style="font-family: Futura; text-decoration: underline;"></h3>
+                        </div>
+                    </div>
+                    <div id="enterFen">
+                        <input type="text" name="userFen" size="40" style="background-color: #aaa;" id="userInputFen">
+                        <input type="submit" value="Set FEN" style="font-weight: bold;" id="submitFen"><br/>
+                        <input type="checkbox" value="Turn white?" id="side">
+                        <label for="side">Turn white?</label>
+                        <input type="checkbox" value="White castle?" id="WhiteCastle">
+                        <label for="WhiteCastle">White castle?</label>
+                        <input type="checkbox" value="Black castle?" id="BlackCastle">
+                        <label for="BlackCastle">Black castle?</label>
+                    </div>
+                </div>
+
+                <div id="version">
+                    <em>v0.1</em>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

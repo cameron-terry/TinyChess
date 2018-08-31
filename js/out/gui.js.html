@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: gui.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: gui.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>// TODO: add table for move list
+
+var gameBoard;
+var fromSq = null;
+var toSq = null;
+var inSelection = false;
+var attrID = null;
+
+var sq1 = null;
+var sq2 = null;
+
+$( document ).ready(function() {
+  gameBoard = new Board();
+  console.log('created a new board.');
+  updateBoard();
+  console.log('updated board.');
+});
+
+$(function(){
+   $('.white_square').click(function(event){
+        if (gameBoard.side != -1) {
+            $(this).css('border', '2px solid #FF0000');
+
+            if (sq1 == null) {sq1 = this;}
+            else if (sq2 == null) {
+                sq2 = this;
+                resetColors(sq1, sq2);
+                sq1 = null;
+                sq2 = null;
+             }
+
+            var img = $(this).find("img");
+            attrID = img.first().attr("id");
+            checkMove();
+        }
+   });
+
+   $('.black_square').click(function(){
+        if (gameBoard.side != -1) {
+            $(this).css('border', '2px solid #FF0000');
+
+            if (sq1 == null) {sq1 = this;}
+            else if (sq2 == null) {
+                sq2 = this;
+                resetColors(sq1, sq2);
+                sq1 = null;
+                sq2 = null;
+            }
+
+            var img = $(this).find("img");
+            attrID = img.first().attr("id");
+            checkMove();
+        }
+   });
+});
+
+function resetColors(sq1, sq2) {
+    if ($(sq1).hasClass('white_square')) {
+        $(sq1).css('border', '0px solid #FF0000');
+    } else {
+        $(sq1).css('border', '0px solid #FF0000');
+    }
+
+    if ($(sq2).hasClass('white_square')) {
+        $(sq2).css('border', '0px solid #FF0000');
+    } else {
+        $(sq2).css('border', '0px solid #FF0000');
+    }
+}
+
+/**
+ * Handles when a square should be highlighted.
+ */
+function checkMove() {
+    if (inSelection) {
+        toSq = attrID;
+        inSelection = false;
+        console.log(fromSq+toSq);
+        makeMove(fromSq, toSq);
+   } else {
+        fromSq = attrID;
+        inSelection = true;
+   }
+}
+
+/**
+ * Updates the GUI.
+ */
+function updateBoard() {
+    var sq = null;
+    for (var i = 0; i &lt; gameBoard.area.length; i++) {
+        sq = gameBoard.area[i];
+        if (!sq.offboard) {
+            sq_id = "#" + gameBoard.printSq(i);
+
+            if (sq.color == COLORS.WHITE) {
+                switch (sq.piece) {
+                    case PIECES.KING:
+                        $(sq_id).attr("src","img/wK.png");
+                        break;
+                    case PIECES.ROOK:
+                        $(sq_id).attr("src","img/wR.png");
+                        break;
+                    case PIECES.KNIGHT:
+                        $(sq_id).attr("src","img/wN.png");
+                        break;
+                    case PIECES.BISHOP:
+                        $(sq_id).attr("src","img/wB.png");
+                        break;
+                    case PIECES.PAWN:
+                        $(sq_id).attr("src","img/wP.png");
+                        break;
+                    case PIECES.QUEEN:
+                        $(sq_id).attr("src","img/wQ.png");
+                        break;
+                    case PIECES.EMPTY:
+                        $(sq_id).attr("src","img/blank.gif");
+                }
+            } else {
+                switch (sq.piece) {
+                    case PIECES.KING:
+                        $(sq_id).attr("src","img/bK.png");
+                        break;
+                    case PIECES.ROOK:
+                        $(sq_id).attr("src","img/bR.png");
+                        break;
+                    case PIECES.KNIGHT:
+                        $(sq_id).attr("src","img/bN.png");
+                        break;
+                    case PIECES.BISHOP:
+                        $(sq_id).attr("src","img/bB.png");
+                        break;
+                    case PIECES.PAWN:
+                        $(sq_id).attr("src","img/bP.png");
+                        break;
+                    case PIECES.QUEEN:
+                        $(sq_id).attr("src","img/bQ.png");
+                        break;
+                    case PIECES.EMPTY:
+                        $(sq_id).attr("src","img/blank.gif");
+                }
+            }
+        }
+    }
+    updateFenGUI();
+}
+
+/**
+ * Updates the HTML FEN.
+ */
+function updateFenGUI() {
+    // .text for text, .val for non-text objects
+    $('h3[id="currentFen"]').text("FEN: " + gameBoard.fen);
+}</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Board.html">Board</a></li><li><a href="Square.html">Square</a></li></ul><h3>Global</h3><ul><li><a href="global.html#checkMove">checkMove</a></li><li><a href="global.html#COLORS">COLORS</a></li><li><a href="global.html#makeMove">makeMove</a></li><li><a href="global.html#MOVEMENTS">MOVEMENTS</a></li><li><a href="global.html#movePiece">movePiece</a></li><li><a href="global.html#PIECES">PIECES</a></li><li><a href="global.html#replaceAll">replaceAll</a></li><li><a href="global.html#SQUARES">SQUARES</a></li><li><a href="global.html#updateBoard">updateBoard</a></li><li><a href="global.html#updateFenGUI">updateFenGUI</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Mon Jul 16 2018 06:34:21 GMT-0400 (EDT)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

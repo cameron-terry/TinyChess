@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: board.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: board.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * @file Board
+ * @author Cameron Terry &lt;cwterry314@gmail.com>
+ * @version 0.1
+ */
+
+// TODO: add move history and a way to uniquely define each position across all games
+
+class Square {
+    /**
+     * The Square definition.
+     * @param {number} piece - the type of piece to occupy the square.
+     * Note that the piece type is an integer (see {@link defs.js})
+     * and that by default a square is considered offboard and no color/side controls it.
+     */
+    constructor(piece) {
+        /**
+         * @name Square#offboard - is the square offboard?
+         * @type boolean
+         * @default true
+         */
+        this.offboard = true;
+        /**
+         * @name Square#piece - the piece controlling the square
+         * @type number
+         */
+        this.piece = piece;
+        /**
+         * @name Square#color - the side controlling the square
+         * @type number
+         * @default COLORS.NONE
+         */
+        this.color = COLORS.NONE;
+    }
+}
+
+class Board {
+    /**
+     * The Board definition.
+     */
+    constructor() {
+        /**
+         * @name Board#area - the size of the board (including offboard squares)
+         * @type Square[]
+         */
+        this.area = new Array(48); // board is 4 * 6 plus a border of 1 of offboard squares all around -- 4 * 6 + (4*6) = 48
+        /**
+         * @name Board#side - the side to move
+         * @type number
+         * @default COLORS.WHITE
+         */
+        this.side = COLORS.WHITE;
+        /**
+         * @name Board#moves - current list of possible moves
+         * @type number[]
+         */
+        this.moves = [];
+        /**
+         * @name Board#fen - the FEN of the current game state
+         * @type boolean
+         */
+        this.fen = "";
+        /**
+         * @name Board#whiteCastle - can white castle?
+         * @type string
+         * @default true
+         */
+        this.whiteCastle = true;
+        /**
+         * @name Board#blackCastle - can black castle?
+         * @type boolean
+         * @default true
+         */
+        this.blackCastle = true;
+        /**
+         * @name Board#gameOver - is the game over?
+         * @type boolean
+         * @default false
+         */
+        this.gameOver = false;
+
+        /* set all squares offboard */
+        for (var i = 0; i &lt; this.area.length; i++) {
+            this.area[i] = new Square(PIECES.EMPTY);
+        }
+
+        /* set main squares to pieces */
+        for (var j = 0; j &lt; this.area.length; j++) {
+            for (var val in SQUARES) {
+                /* square found in SQUARES dict (see {@link defs.js}) */
+                if (SQUARES[val] == j) {
+                    this.area[j].offboard = false;
+
+                    /* populate square if needed */
+                    switch (j) {
+                        case SQUARES.A1:
+                            this.area[j].piece = PIECES.ROOK;
+                            this.area[j].color = COLORS.WHITE;
+                            break;
+                        case SQUARES.A2:
+                            this.area[j].piece = PIECES.PAWN;
+                            this.area[j].color = COLORS.WHITE;
+                            break;
+                        case SQUARES.A5:
+                            this.area[j].piece = PIECES.PAWN;
+                            this.area[j].color = COLORS.BLACK;
+                            break;
+                        case SQUARES.A6:
+                            this.area[j].piece = PIECES.ROOK;
+                            this.area[j].color = COLORS.BLACK;
+                            break;
+                        case SQUARES.B1:
+                            this.area[j].piece = PIECES.KNIGHT;
+                            this.area[j].color = COLORS.WHITE;
+                            break;
+                        case SQUARES.B2:
+                            this.area[j].piece = PIECES.PAWN;
+                            this.area[j].color = COLORS.WHITE;
+                            break;
+                        case SQUARES.B5:
+                            this.area[j].piece = PIECES.PAWN;
+                            this.area[j].color = COLORS.BLACK;
+                            break;
+                        case SQUARES.B6:
+                            this.area[j].piece = PIECES.KNIGHT;
+                            this.area[j].color = COLORS.BLACK;
+                            break;
+                        case SQUARES.C1:
+                            this.area[j].piece = PIECES.BISHOP;
+                            this.area[j].color = COLORS.WHITE;
+                            break;
+                        case SQUARES.C2:
+                            this.area[j].piece = PIECES.PAWN;
+                            this.area[j].color = COLORS.WHITE;
+                            break;
+                        case SQUARES.C5:
+                            this.area[j].piece = PIECES.PAWN;
+                            this.area[j].color = COLORS.BLACK;
+                            break;
+                        case SQUARES.C6:
+                            this.area[j].piece = PIECES.BISHOP;
+                            this.area[j].color = COLORS.BLACK;
+                            break;
+                        case SQUARES.D1:
+                            this.area[j].piece = PIECES.KING;
+                            this.area[j].color = COLORS.WHITE;
+                            break;
+                        case SQUARES.D2:
+                            this.area[j].piece = PIECES.PAWN;
+                            this.area[j].color = COLORS.WHITE;
+                            break;
+                        case SQUARES.D5:
+                            this.area[j].piece = PIECES.PAWN;
+                            this.area[j].color = COLORS.BLACK;
+                            break;
+                        case SQUARES.D6:
+                            this.area[j].piece = PIECES.KING;
+                            this.area[j].color = COLORS.BLACK;
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+        }
+        
+        this.createFen();
+    }
+
+    /**
+     * Create a FEN of the current game state.
+     */
+    createFen() {
+        var current_fen = "";
+        var rank = 0;
+        for (var i = 0; i &lt; this.area.length; i++) {
+            var sq = this.area[i];
+
+            if (!sq.offboard) {
+                switch (sq.piece) {
+                    case PIECES.EMPTY:
+                        current_fen += "-";
+                        break;
+                    case PIECES.KING:
+                        if (sq.color == COLORS.WHITE) {
+                            current_fen += "K";
+                        } else {
+                            current_fen += "k";
+                        }
+                        break;
+                    case PIECES.ROOK:
+                        if (sq.color == COLORS.WHITE) {
+                            current_fen += "R";
+                        } else {
+                            current_fen += "r";
+                        }
+                        break;
+                    case PIECES.KNIGHT:
+                        if (sq.color == COLORS.WHITE) {
+                            current_fen += "N";
+                        } else {
+                            current_fen += "n";
+                        }
+                        break;
+                    case PIECES.BISHOP:
+                        if (sq.color == COLORS.WHITE) {
+                            current_fen += "B";
+                        } else {
+                            current_fen += "b";
+                        }
+                        break;
+                    case PIECES.PAWN:
+                        if (sq.color == COLORS.WHITE) {
+                            current_fen += "P";
+                        } else {
+                            current_fen += "p";
+                        }
+                        break;
+                    case PIECES.QUEEN:
+                        if (sq.color == COLORS.WHITE) {
+                            current_fen += "Q";
+                        } else {
+                            current_fen += "q";
+                        }
+                        break;
+                    default:
+                        break;
+                }
+                rank += 1;
+
+                if (rank % 4 == 0) {
+                    current_fen += "/";
+                }
+            }
+        }
+
+        // remove last "/"
+        current_fen = current_fen.slice(0, -1);
+        // change - to 1, 2, etc
+        current_fen = replaceAll(current_fen, "----", "4");
+        current_fen = replaceAll(current_fen, "---", "3");
+        current_fen = replaceAll(current_fen, "--", "2");
+        current_fen = replaceAll(current_fen, "-", "1");
+        this.fen = current_fen;
+    }
+
+    /**
+     * Creates a list of all of the spaces a given piece for the current side can move to.
+     * @param {number} sq - the square to observe
+     * @param {number} piece - the piece to find moves for (see {@link defs.js})
+     * @return list of possible moves
+     */
+    createMoves (sq, piece) {
+        var possible_moves = []; // holds the possible moves and later unique captures as well
+        var to_sq = 0; // the square to move to
+        this.moves = []; // reset all moves found so far (needed when createMoves() is called in a loop and the result is stored in this.moves)
+
+        var free_to_move = false; // used to separate logic from if statement for easier reading
+        var is_offboard = false; // used in place of this.area[foo].offboard
+
+        switch (piece) {
+            case PIECES.KING:
+
+                for (var dir = 0; dir &lt; MOVEMENTS.KING.length; dir++) {
+                    to_sq = sq + MOVEMENTS.KING[dir];
+
+                    free_to_move = this.area[to_sq].piece == PIECES.EMPTY || this.area[to_sq].color == this.side^1;
+                    is_offboard = this.area[to_sq].offboard;
+
+                    if (!is_offboard &amp;&amp; free_to_move) {
+                        possible_moves.push([sq, to_sq]);
+                    }
+                }
+                break;
+            case PIECES.ROOK:
+                // keep moving in in the same direction until a piece is found
+                for (var dir = 0; dir &lt; MOVEMENTS.ROOK.length; dir++) {
+                    to_sq = sq
+
+                    do {
+                        to_sq += MOVEMENTS.ROOK[dir];
+
+                        is_offboard = this.area[to_sq].offboard;
+
+                        if (!is_offboard &amp;&amp; this.area[to_sq].piece == PIECES.EMPTY) {
+                            possible_moves.push([sq, to_sq]);
+                        } else if (this.area[to_sq].color == this.side^1) { // found a capture
+                            possible_moves.push([sq, to_sq]);
+                            break; // have to stop, can't go past other pieces!
+                        } else if (this.area[to_sq].color == this.side) { break; }
+                    }
+                    while (!is_offboard);
+
+                }
+                break;
+            case PIECES.KNIGHT:
+                for (var dir = 0; dir &lt; MOVEMENTS.KNIGHT.length; dir++) {
+                    to_sq = sq + MOVEMENTS.KNIGHT[dir];
+
+                    is_offboard = this.area[to_sq] != undefined &amp;&amp; !this.area[to_sq].offboard;
+                    // special case for knight due to the statement above -- is_offboard is actually is_not_offboard
+                    if (is_offboard) {
+                        free_to_move = this.area[to_sq].piece == PIECES.EMPTY || this.area[to_sq].color == this.side^1;
+                        if (free_to_move) {
+                            possible_moves.push([sq, to_sq]);
+                        }
+                    }
+                }
+                break;
+            case PIECES.BISHOP:
+                // keep moving in in the same direction until a piece is found
+                for (var dir = 0; dir &lt; MOVEMENTS.BISHOP.length; dir++) {
+                    to_sq = sq
+                    do {
+                        to_sq += MOVEMENTS.BISHOP[dir];
+
+                        is_offboard = this.area[to_sq].offboard;
+
+                        if (!is_offboard &amp;&amp; this.area[to_sq].piece == PIECES.EMPTY) {
+                            possible_moves.push([sq, to_sq]);
+                        } else if (this.area[to_sq].color == this.side^1) { // found a capture
+                            possible_moves.push([sq, to_sq]);
+                            break; // have to stop, can't go past other pieces!
+                        } else if (this.area[to_sq].color == this.side) { break; }
+                    }
+                    while (!is_offboard) {
+
+                    }
+                }
+                break;
+            case PIECES.PAWN:
+                // TODO: fix pawn start
+                for (var dir = 0; dir &lt; MOVEMENTS.PAWN.length; dir++) {
+                    // pawns only move one way -- forward!
+                    if (this.side == COLORS.WHITE) {
+                        to_sq = sq + MOVEMENTS.PAWN[dir];
+                    } else {
+                        to_sq = sq - MOVEMENTS.PAWN[dir];
+                    }
+
+                    free_to_move = this.area[to_sq].piece == PIECES.EMPTY || this.area[to_sq].color == this.side^1;
+                    is_offboard = this.area[to_sq].offboard;
+
+                    if (!is_offboard &amp;&amp; free_to_move) {
+                        possible_moves.push([sq, to_sq]);
+                    }
+                }
+                break;
+            case PIECES.QUEEN:
+                // keep moving in in the same direction until a piece is found
+                for (var dir = 0; dir &lt; MOVEMENTS.QUEEN.length; dir++) {
+                    to_sq = sq;
+
+                    do {
+                        to_sq += MOVEMENTS.QUEEN[dir];
+                        is_offboard = this.area[to_sq].offboard;
+                        if (!is_offboard &amp;&amp; this.area[to_sq].piece == PIECES.EMPTY) {
+                            possible_moves.push([sq, to_sq]);
+                        } else if (this.area[to_sq].color == this.side^1) { // found a capture
+                            possible_moves.push([sq, to_sq]);
+                            break; // have to stop, can't go past other pieces!
+                        } else if (this.area[to_sq].color == this.side) { break; }
+                    }
+                    while (!this.area[to_sq].offboard);
+                }
+                break;
+            default:
+                break;
+        }
+
+        possible_moves = this.createCaptures(sq, piece, possible_moves);
+        return possible_moves;
+    }
+
+    /**
+     * Adds captures to a given list of moves.
+     * @param {number} sq - the square to observe
+     * @param {number} piece - the piece to find moves for (see {@link defs.js})
+     * @param {number[]} possible_moves - a list of possible moves
+     * @return a list of possible moves + unique captures
+     */
+    createCaptures(sq, piece, possible_moves) {
+        var to_sq = 0; // the square to move to
+        var is_offboard = false; // used in place of this.area[foo].offboard
+        var square_color = this.area[sq].color; // color of controlled square
+        var to_square_color = -1; // color of square to move to
+
+        switch (piece) {
+            case PIECES.PAWN:
+                if (square_color == COLORS.WHITE) {
+                    to_sq = sq - 5;
+                } else if (square_color == COLORS.BLACK) {
+                    to_sq = sq + 5;
+                }
+
+                is_offboard = this.area[to_sq].offboard;
+                to_square_color = this.area[to_sq].color;
+
+                if (!is_offboard &amp;&amp; to_square_color == this.side^1) {
+                    possible_moves.push([sq, to_sq]);
+                }
+
+                if (square_color == COLORS.WHITE) {
+                    to_sq = sq - 7;
+                } else if (square_color == COLORS.BLACK) {
+                    to_sq = sq + 7;
+                }
+
+                is_offboard = this.area[to_sq].offboard;
+                to_square_color = this.area[to_sq].color;
+
+                if (!is_offboard &amp;&amp; to_square_color == this.side^1) {
+                    possible_moves.push([sq, to_sq]);
+                }
+                break;
+             default:
+                break;
+        }
+
+        return possible_moves;
+    }
+
+    /**
+     * Checks to see if current side can castle.
+     * @return if side can castle
+     */
+    checkCastle() {
+        if (this.side == COLORS.WHITE) {
+            if ((this.area[SQUARES.A1].piece == PIECES.ROOK &amp;&amp; this.area[SQUARES.A1].color == COLORS.WHITE)
+            &amp;&amp; (this.area[SQUARES.D1].piece == PIECES.KING &amp;&amp; this.area[SQUARES.D1].color == COLORS.WHITE)
+            &amp;&amp; (this.area[SQUARES.B1].piece == PIECES.EMPTY &amp;&amp; this.area[SQUARES.C1].piece == PIECES.EMPTY) &amp;&amp; this.whiteCastle) {
+               return true;
+            }
+        } else {
+            if ((this.area[SQUARES.A6].piece == PIECES.ROOK &amp;&amp; this.area[SQUARES.A6].color == COLORS.BLACK)
+            &amp;&amp; (this.area[SQUARES.D6].piece == PIECES.KING &amp;&amp; this.area[SQUARES.D6].color == COLORS.BLACK)
+            &amp;&amp; (this.area[SQUARES.B6].piece == PIECES.EMPTY &amp;&amp; this.area[SQUARES.C6].piece == PIECES.EMPTY) &amp;&amp; this.blackCastle) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Checks to see if a given square is attacked by the opposing side.
+     * @return if square is attacked by opposing side
+     */
+    sqAttacked (to_sq) {
+        // check opponent's moves
+        this.side ^= 1;
+
+        var possible_moves = [];
+
+        for (var i = 0; i &lt; this.area.length; i++) {
+            var sq = this.area[i];
+
+            if (!sq.offboard) {
+                var p_move = []; // holds the current move list for a given piece
+
+                // found a piece
+                if (!sq.piece == PIECES.EMPTY &amp;&amp; sq.color == this.side) {
+                    p_move = this.createMoves(i, sq.piece);
+
+                    if (p_move.length > 0) {
+                        for (var m in p_move) {
+                            possible_moves.push(p_move[m]);
+                        }
+                    }
+                 }
+            }
+        }
+        this.side ^= 1;
+
+        // check to see if opponent can move to square
+        for (var move in possible_moves) {
+            if (possible_moves[move][1] == to_sq) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Checks to see if given side is in check.
+     * @return if given side is in check
+     */
+    inCheck () {
+        var king_sq = null;
+        for (var i = 0; i &lt; this.area.length; i++) {
+            // find the king
+            if (this.area[i].piece == PIECES.KING &amp;&amp; this.area[i].color == this.side) {
+                king_sq = i;
+
+            }
+        }
+
+        return this.sqAttacked(king_sq);
+    }
+
+    // TODO: include fifty move rule and three fold repetition
+    /**
+     * Checks to see if the game is over.
+     */
+    checkState() {
+        var found_material = false;
+        var sq = 0;
+
+        for (var i = 0; i &lt; this.area.length; i++) {
+            sq = this.area[i];
+
+            if (!sq.offboard) {
+                if (sq.piece == PIECES.ROOK || sq.piece == PIECES.PAWN) {
+                    found_material = true;
+                    break;
+                }
+            }
+        }
+
+        this.gameOver = (found_material) ? false : true;
+    }
+
+    /**
+     * Print the state of the board.
+     */
+    printBoard () {
+        var board_pic = "";
+        var rank = 0;
+        for (var i = 0; i &lt; this.area.length; i++) {
+            var sq = this.area[i];
+
+            if (!sq.offboard) {
+                switch (sq.piece) {
+                    case PIECES.EMPTY:
+                        board_pic += "-  ";
+                        break;
+                    case PIECES.KING:
+                        if (sq.color == COLORS.WHITE) {
+                            board_pic += "K ";
+                        } else {
+                            board_pic += "k ";
+                        }
+                        break;
+                    case PIECES.ROOK:
+                        if (sq.color == COLORS.WHITE) {
+                            board_pic += "R ";
+                        } else {
+                            board_pic += "r ";
+                        }
+                        break;
+                    case PIECES.KNIGHT:
+                        if (sq.color == COLORS.WHITE) {
+                            board_pic += "N ";
+                        } else {
+                            board_pic += "n ";
+                        }
+                        break;
+                    case PIECES.BISHOP:
+                        if (sq.color == COLORS.WHITE) {
+                            board_pic += "B ";
+                        } else {
+                            board_pic += "b ";
+                        }
+                        break;
+                    case PIECES.PAWN:
+                        if (sq.color == COLORS.WHITE) {
+                            board_pic += "P ";
+                        } else {
+                            board_pic += "p ";
+                        }
+                        break;
+                    case PIECES.QUEEN:
+                        if (sq.color == COLORS.WHITE) {
+                            board_pic += "Q ";
+                        } else {
+                            board_pic += "q ";
+                        }
+                        break;
+                    default:
+                        break;
+                }
+                rank += 1;
+            }
+            if (rank % 4 == 0) {
+                board_pic += "\n";
+            }
+
+        }
+
+        console.log(board_pic);
+    }
+
+    /**
+     * Returns a square name from location in gameBoard.area.
+     * @param {number} sq - the square to find
+     * @return the square (lowercase)
+     */
+    printSq (sq) {
+        for (var val in SQUARES) {
+            if (SQUARES[val] == sq) {
+               return val.toLowerCase();
+            }
+        }
+    }
+
+    /**
+     * Prints a list of moves for the side to move.
+     */
+    printMoveList () {
+        var move_list = [];
+        for (var i = 0; i &lt; this.area.length; i++) {
+            var sq = this.area[i];
+
+            if (!sq.offboard) {
+                var move = null;
+                if (!sq.piece == PIECES.EMPTY &amp;&amp; sq.color == this.side) {
+                    move = this.createMoves(i, sq.piece);
+                    var pr_move = []; // just for printing
+
+                    for (var p in move) {
+                       pr_move.push(this.printSq(move[p][1]));
+                    }
+
+                    var pce_name = PIECES.EMPTY;
+                    switch (sq.piece) {
+                        case PIECES.KING:
+                            pce_name = "KING";
+                            break;
+                        case PIECES.ROOK:
+                            pce_name = "ROOK";
+                            break;
+                        case PIECES.KNIGHT:
+                            pce_name = "KNIGHT";
+                            break;
+                        case PIECES.BISHOP:
+                            pce_name = "BISHOP";
+                            break;
+                        case PIECES.PAWN:
+                            pce_name = "PAWN";
+                            break;
+                        case PIECES.QUEEN:
+                            pce_name = "QUEEN";
+                            break;
+                        default:
+                            break;
+                    }
+                    console.log("moves for " + pce_name + " on " + this.printSq(i) + " : " + pr_move);
+                    if (move.length > 0) {
+                        move_list.push(move);
+                    }
+                }
+            }
+        }
+        console.log("done calculating moves");
+//        for (var i = 0; i &lt; move_list.length; i++) {
+//            this.moves = this.moves.concat(move_list[i]);
+//        }
+//        console.log(this.moves);
+    }
+}</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Board.html">Board</a></li><li><a href="Square.html">Square</a></li></ul><h3>Global</h3><ul><li><a href="global.html#checkMove">checkMove</a></li><li><a href="global.html#COLORS">COLORS</a></li><li><a href="global.html#makeMove">makeMove</a></li><li><a href="global.html#MOVEMENTS">MOVEMENTS</a></li><li><a href="global.html#movePiece">movePiece</a></li><li><a href="global.html#PIECES">PIECES</a></li><li><a href="global.html#replaceAll">replaceAll</a></li><li><a href="global.html#SQUARES">SQUARES</a></li><li><a href="global.html#updateBoard">updateBoard</a></li><li><a href="global.html#updateFenGUI">updateFenGUI</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Mon Jul 16 2018 06:34:21 GMT-0400 (EDT)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

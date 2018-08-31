@@ -1,0 +1,7 @@
+fen,side_winning,best_moves_white,best_moves_black
+4/4/1b2/1B1k/4/2K1,0.5,0.5,0.5
+4/4/2k1/4/2N1/1R1K,1,"d1d2","c4d3"
+3B/4/3n/2PK/kP2/1rbN,0,"d3d4","d4b5"
+3k/4/4/R1K1/4/2P1,1,"a3a5","d6c5"
+4/4/r1K1/4/2N1/3k,0,"c4b3","d4c3"
+n3/P3/4/1K2/4/2qk,0,"b3c4","a6c5"

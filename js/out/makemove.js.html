@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: makemove.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: makemove.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * @file MakeMove
+ * @author Cameron Terry &lt;cwterry314@gmail.com>
+ * @version 0.1
+ */
+
+
+/**
+ * Moves the piece on the gui if possible.
+ * @param {string} from - the square name to move from (note from is lowercase)
+ * @param {string} to - the square name to move to (note to is lowercase)
+ */
+function makeMove(from, to) {
+    // convert so they can be searched in SQUARES
+    from = SQUARES[from.toUpperCase()];
+    to = SQUARES[to.toUpperCase()];
+
+    var castled = false; // check for castle later
+    var promoted = false; // check for promotion later
+
+    /* first check for castle */
+    if (gameBoard.side == COLORS.WHITE) {
+        if (from == SQUARES.D1 &amp;&amp; to == SQUARES.B1) {
+            // is king on correct square?
+            if (gameBoard.area[SQUARES.D1].piece == PIECES.KING &amp;&amp; gameBoard.area[SQUARES.D1].color == COLORS.WHITE) {
+                var canCastle = gameBoard.checkCastle();
+
+                if (canCastle) {
+                    castled = true;
+                    movePiece(from, to);
+                    movePiece(SQUARES.A1, SQUARES.C1);
+                    updateBoard();
+                    gameBoard.whiteCastle = false;
+                    gameBoard.createFen();
+                    updateFenGUI();
+                    gameBoard.printBoard();
+
+                    // check for game over
+                    gameBoard.checkState();
+
+                    if (gameBoard.gameOver) {
+                        gameBoard.side = -1;
+                    } else { gameBoard.side ^= 1; }
+                }
+            }
+        }
+    } else {
+         if (from == SQUARES.D6 &amp;&amp; to == SQUARES.B6) {
+            // is king on correct square?
+            if (gameBoard.area[SQUARES.D6].piece == PIECES.KING &amp;&amp; gameBoard.area[SQUARES.D6].color == COLORS.BLACK) {
+                var canCastle = gameBoard.checkCastle();
+
+                if (canCastle) {
+                    castled = true;
+                    movePiece(from, to);
+                    movePiece(SQUARES.A6, SQUARES.C6);
+                    updateBoard();
+                    gameBoard.blackCastle = false;
+                    gameBoard.createFen();
+                    updateFenGUI();
+                    gameBoard.printBoard();
+
+                    // check for game over
+                    gameBoard.checkState();
+
+                    if (gameBoard.gameOver) {
+                        gameBoard.side = -1;
+                    } else { gameBoard.side ^= 1; }
+                }
+            }
+        }
+    }
+
+    /* next check for promotion */
+    if (gameBoard.side == COLORS.WHITE) {
+        // is pawn advancing to opponent's first rank?
+        if (((to == SQUARES.A6 || to == SQUARES.B6 || to == SQUARES.C6 || to == SQUARES.D6)) &amp;&amp; gameBoard.area[from].piece == PIECES.PAWN
+            &amp;&amp; gameBoard.area[from].color == COLORS.WHITE) {
+            promoted = movePiece(from, to);
+
+            if (promoted) {
+                gameBoard.area[to].piece = PIECES.QUEEN;
+                gameBoard.area[to].color = COLORS.WHITE;
+                updateBoard();
+                gameBoard.createFen();
+                updateFenGUI();
+                gameBoard.printBoard();
+
+                gameBoard.checkState();
+
+                if (gameBoard.gameOver) {
+                    gameBoard.side = -1;
+                } else { gameBoard.side ^= 1; }
+            }
+        }
+    } else {
+        // is pawn advancing to opponent's first rank?
+        if (((to == SQUARES.A1 || to == SQUARES.B1 || to == SQUARES.C1 || to == SQUARES.D1)) &amp;&amp; gameBoard.area[from].piece == PIECES.PAWN
+            &amp;&amp; gameBoard.area[from].color == COLORS.BLACK) {
+            promoted = movePiece(from, to);
+
+            if (promoted) {
+                gameBoard.area[to].piece = PIECES.QUEEN;
+                gameBoard.area[to].color = COLORS.BLACK;
+                updateBoard();
+                gameBoard.createFen();
+                updateFenGUI();
+                gameBoard.printBoard();
+
+                gameBoard.checkState();
+
+                if (gameBoard.gameOver) {
+                    gameBoard.side = -1;
+                } else { gameBoard.side ^= 1; }
+            }
+        }
+    }
+
+    /* normal move */
+    if (!castled &amp;&amp; !promoted) {
+
+        var possible_moves = [];
+
+        for (var i = 0; i &lt; gameBoard.area.length; i++) {
+            var sq = gameBoard.area[i];
+
+            if (!sq.offboard) {
+                var p_move = [];
+                if (!sq.piece == PIECES.EMPTY &amp;&amp; sq.color == gameBoard.side) {
+                    p_move = gameBoard.createMoves(i, sq.piece);
+                    if (p_move.length > 0) {
+                        for (var m in p_move) {
+                            possible_moves.push(p_move[m]);
+                        }
+                    }
+                 }
+            }
+        }
+
+        gameBoard.moves = possible_moves;
+
+//        console.log('making move from ' + from + ' to ' + to + '.');
+
+        if (gameBoard.moves.length > 0) {
+            for (var move in gameBoard.moves) {
+                if (move.length > 0) {
+                    try {
+                        if (gameBoard.moves[move][0] == from &amp;&amp; gameBoard.moves[move][1] == to) {
+                            var piece_moved = movePiece(from, to);
+
+                            if (piece_moved) {
+                                /* check if rook or king move */
+
+                                if (gameBoard.side == COLORS.WHITE) {
+                                    if (((gameBoard.area[to].piece == PIECES.ROOK) &amp;&amp; (gameBoard.area[to].color == COLORS.WHITE))
+                                    || ((gameBoard.area[to].piece == PIECES.KING) &amp;&amp; (gameBoard.area[to].color == COLORS.WHITE))) {
+                                        gameBoard.whiteCastle = false;
+                                    }
+                                } else {
+                                    if (((gameBoard.area[to].piece == PIECES.ROOK) &amp;&amp; (gameBoard.area[to].color == COLORS.BLACK))
+                                     || ((gameBoard.area[to].piece == PIECES.KING) &amp;&amp; (gameBoard.area[to].color == COLORS.BLACK))) {
+                                        gameBoard.blackCastle = false;
+                                     }
+                                }
+
+                                updateBoard();
+                                gameBoard.createFen();
+                                updateFenGUI();
+                                gameBoard.printBoard();
+
+                                gameBoard.checkState();
+
+                                if (gameBoard.gameOver) {
+                                    gameBoard.side = -1;
+                                } else { gameBoard.side ^= 1; }
+
+                                break;
+                            }
+                        }
+                    } catch(err) {
+                        continue;
+                    }
+                }
+            }
+        } else {
+            /* check for mate or draw */
+            console.log('mate or draw?');
+        }
+    }
+}
+
+/**
+ * Moves the piece on the game board if possible.
+ * @param {number} from - the square to move from
+ * @param {number} to - the square to move to
+ * @returns {boolean} if piece was moved
+ */
+function movePiece(from, to) {
+    var from_pce = gameBoard.area[from].piece;
+    var to_pce = gameBoard.area[to].piece;
+    var prev_color = gameBoard.area[to].color; // save in case move is not valid
+
+    gameBoard.area[from].piece = PIECES.EMPTY;
+    gameBoard.area[from].color = COLORS.NONE;
+    gameBoard.area[to].piece = from_pce;
+    gameBoard.area[to].color = gameBoard.side;
+
+//    console.log("in check: " + gameBoard.inCheck() + ", side white: " + (gameBoard.side == COLORS.WHITE));
+    if (gameBoard.inCheck()) {
+        gameBoard.area[to].piece = to_pce;
+        gameBoard.area[from].piece = from_pce;
+        gameBoard.area[to].color = prev_color;
+        return false;
+    }
+
+    return true;
+}
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Board.html">Board</a></li><li><a href="Square.html">Square</a></li></ul><h3>Global</h3><ul><li><a href="global.html#checkMove">checkMove</a></li><li><a href="global.html#COLORS">COLORS</a></li><li><a href="global.html#makeMove">makeMove</a></li><li><a href="global.html#MOVEMENTS">MOVEMENTS</a></li><li><a href="global.html#movePiece">movePiece</a></li><li><a href="global.html#PIECES">PIECES</a></li><li><a href="global.html#replaceAll">replaceAll</a></li><li><a href="global.html#SQUARES">SQUARES</a></li><li><a href="global.html#updateBoard">updateBoard</a></li><li><a href="global.html#updateFenGUI">updateFenGUI</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Mon Jul 16 2018 06:34:21 GMT-0400 (EDT)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
