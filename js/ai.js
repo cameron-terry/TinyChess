@@ -441,14 +441,14 @@ class MCTS {
             var v_i1 = node.children[child].rating[0];
             var v_i2 = node.children[child].rating[1];
 
-            var v_i = (v_i1 == 0 && v_i2 == 0) ? Infinity : v_i1 / v_i2;
+            var v_i = (v_i2 == 0) ? Infinity : v_i1 / v_i2;
 
-            v_i += node.iterations * node.material; // * (1 - node.depth?)
+            // v_i += node.iterations; // * (1 - node.depth?)
 
-            var part1 = 2 * Math.log(this.total_simulations);
+            var part1 = Math.log(this.total_simulations);
             var part2 = node.children[child].rating[1];
 
-            var exploration = (part1 == 0 && part2 == 0) ? Infinity : part1 / part2;
+            var exploration = (part2 == 0) ? Infinity : part1 / part2;
 
             node.children[child].policy_value = v_i + Math.sqrt(exploration);
 
@@ -677,26 +677,35 @@ class AI {
         }
 
         var move_ratings = [];
-        var most_visited = 0;
-        var most_visited_index = 0;
+
+        // go by most visited
+        /* var most_visited = 0;
+        var most_visited_index = 0; */
 
         try {
             for (var move = 0; move < move_list.length; move++) {
                 move_ratings.push(move_list[move].rating[0] / move_list[move].rating[1]);
                 console.log("move " + this.aiBoard.board.printSq(valid_moves[move][0])+this.aiBoard.board.printSq(valid_moves[move][1]) + ": " + move_ratings[move]);
 
+                /* go by most visited
                 if (move_list[move].rating[1] > most_visited) {
                     most_visited = move_list[move].rating[1];
                     most_visited_index = move;
                 }
+                */
             }
             console.log("============");
 
             this.ai_mcts.clearNodes();
 
-            return valid_moves[most_visited_index];
-//            return valid_moves[move_ratings.indexOf(Math.max(...move_ratings))];
+            // go by most visited
+            // return valid_moves[most_visited_index];
+
+            // go by highest rated
+            return valid_moves[move_ratings.indexOf(Math.max(...move_ratings))];
+
         } catch (err) {
+            console.log('there was an error!')
             this.aiBoard.board.gameOver = true;
             console.log('game is a draw [stalemate]');
             playSound('end');

@@ -2,7 +2,7 @@
 
 var gameBoard = new Board();
 var comp;
-var alg = "MM";
+var alg = "MCTS";
 var fromSq = null;
 var toSq = null;
 var inSelection = false;
