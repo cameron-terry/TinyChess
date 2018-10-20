@@ -218,7 +218,7 @@ class Board {
 
         var state = new GameState();
 
-        var board = JSON.parse(JSON.stringify( this.area )); // deep copying is kinda a bitch in js
+        var board = JSON.parse(JSON.stringify( this.area )); // deep copying is kinda annoying in js
 
         state.board = Object.assign({}, (board));
 
