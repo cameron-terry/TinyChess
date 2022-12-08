@@ -10,7 +10,7 @@
  * @param {string} to - the square name to move to (note to is lowercase)
  * @returns if the move can be made on the gui
  */
-function makeMove(from, to) {
+function makeMove(from, to, debug = false) {
   // convert so they can be searched in SQUARES
   from = SQUARES[from.toUpperCase()];
   to = SQUARES[to.toUpperCase()];
@@ -36,7 +36,7 @@ function makeMove(from, to) {
         updateBoard();
         gameBoard.createFen();
         updateFenGUI();
-        // gameBoard.printBoard();
+        if (debug) gameBoard.printBoard();
         gameBoard.fiftymove = 0;
 
         gameBoard.checkState();
@@ -87,7 +87,7 @@ function makeMove(from, to) {
         updateBoard();
         gameBoard.createFen();
         updateFenGUI();
-        // gameBoard.printBoard();
+        if (debug) gameBoard.printBoard();
         gameBoard.fiftymove = 0;
 
         gameBoard.checkState();
@@ -129,7 +129,7 @@ function makeMove(from, to) {
     var sq = gameBoard.area[from];
     var p_move = [];
 
-    if (!sq.piece == PIECES.EMPTY && sq.color == gameBoard.side) {
+    if (sq.piece != PIECES.EMPTY && sq.color == gameBoard.side) {
       var p_move = [];
       if (!sq.offboard) {
         p_move = gameBoard.createMoves(from, sq.piece);
@@ -165,7 +165,7 @@ function makeMove(from, to) {
                 updateBoard();
                 gameBoard.createFen();
                 updateFenGUI();
-                // gameBoard.printBoard();
+                if (debug) gameBoard.printBoard();
 
                 gameBoard.checkState();
 
@@ -218,10 +218,10 @@ function makeMove(from, to) {
  */
 function movePiece(from, to, board) {
   // save in case move is not valid
-  var from_pce = board.area[from].piece;
-  var from_color = board.area[from].color;
-  var to_pce = board.area[to].piece;
-  var to_color = board.area[to].color;
+  const from_pce = board.area[from].piece;
+  const from_color = board.area[from].color;
+  const to_pce = board.area[to].piece;
+  const to_color = board.area[to].color;
 
   board.area[from].piece = PIECES.EMPTY;
   board.area[from].color = COLORS.NONE;

@@ -241,8 +241,8 @@ class Board {
           this.area[i].color = COLORS.WHITE;
           break;
         case "K":
-          gameBoard.area[i].piece = PIECES.KING;
-          gameBoard.area[i].color = COLORS.WHITE;
+          this.area[i].piece = PIECES.KING;
+          this.area[i].color = COLORS.WHITE;
           break;
         case "Q":
           this.area[i].piece = PIECES.QUEEN;
@@ -289,7 +289,7 @@ class Board {
           break;
         case "3":
           for (var j = 0; j < 3; j++) {
-            if (!gameBoard.area[i + j].offboard) {
+            if (!this.area[i + j].offboard) {
               this.area[i + j].piece = PIECES.EMPTY;
               this.area[i + j].color = COLORS.NONE;
             } else {
@@ -396,6 +396,8 @@ class Board {
     current_fen = replaceAll(current_fen, "--", "2");
     current_fen = replaceAll(current_fen, "-", "1");
     this.fen = current_fen;
+
+    return this.fen;
   }
 
   /*
@@ -779,10 +781,10 @@ class Board {
    * Check to see which squares are attacked by the opposing side.
    * @return which squares are attacked
    */
-  squaresAttacked() {
-    this.side ^= 1;
-    var move_list = generateMoveList();
-    this.side ^= 1;
+  squaresAttacked(observer = false) {
+    if (!observer) this.side ^= 1;
+    var move_list = this.generateMoveList();
+    if (!observer) this.side ^= 1;
 
     var squares_attacked = [];
 
@@ -1340,7 +1342,6 @@ class Board {
     } else {
       this.gameOver = true;
       this.side = -1;
-      $("#fenTitle").css("background-color", "#820303");
     }
   }
 
@@ -1355,6 +1356,7 @@ class Board {
       this.isMate();
 
       if (this.gameOver) {
+        $("#fenTitle").css("background-color", "#820303");
         if (this.side == COLORS.WHITE) {
           var found_king = false;
           for (var i = 0; i < this.area.length; i++) {

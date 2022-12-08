@@ -116,17 +116,9 @@
             </div>
             <div id="AIControllerBody">
               <select id="levelSelect">
-                <option value="0">Level 0</option>
-                <option value="1">Level 1</option>
-                <option value="2">Level 2</option>
-                <option value="3">Level 3</option>
-                <option value="4">Level 4</option>
-                <option value="5">Level 5</option>
-                <option value="6">Level 6</option>
-                <option value="7">Level 7</option>
-                <option value="8">Level 8</option>
-                <option value="9">Level 9</option>
-                <option value="10">Level 10</option>
+                <option value="0">Clueless</option>
+                <option value="1" selected>Aggressive</option>
+                <option value="2">Strong</option>
               </select>
               <img id="lightbulb" src="img/lightbulb.png" />
               <label class="switch">
@@ -145,19 +137,19 @@
                 value="Take Back"
                 style="font-weight: bold"
                 class="takeBackLastMove"
-              /><br />
+              />
               <input
                 type="submit"
                 value="Reset Game"
                 style="font-weight: bold"
                 class="resetGame"
-              /><br />
+              />
               <input
                 type="submit"
                 value="Save Game"
                 style="font-weight: bold"
                 class="saveGameData"
-              /><br />
+              />
             </div>
           </div>
           <div id="moveList">
@@ -227,12 +219,8 @@
               style="font-weight: bold"
               id="submitFen"
             /><br />
-            <input type="checkbox" value="Turn white?" id="side" />
-            <label for="side">Turn white?</label>
-            <input type="checkbox" value="White castle?" id="WhiteCastle" />
-            <label for="WhiteCastle">White castle?</label>
-            <input type="checkbox" value="Black castle?" id="BlackCastle" />
-            <label for="BlackCastle">Black castle?</label>
+            <!-- <input type="checkbox" value="Turn white?" id="side" />
+            <label for="side">Turn white?</label> -->
           </div>
         </div>
 

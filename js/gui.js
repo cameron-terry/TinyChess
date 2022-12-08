@@ -30,7 +30,7 @@ $(document).ready(function () {
   gameBoard = new Board();
   updateBoard();
   comp = new AI(gameBoard);
-  document.getElementById("side").checked = true;
+  //   document.getElementById("side").checked = true;
 });
 
 // set up comp slider
@@ -49,58 +49,9 @@ document.addEventListener("DOMContentLoaded", function () {
 async function searchComp(comp, alg) {
   if (!gameBoard.gameOver) {
     var level = $("#levelSelect").val();
-    var depth = 1;
+    comp.setMoves(level);
 
-    switch (level) {
-      case "0":
-        search_level = LEVELS.LEVEL_0;
-        break;
-      case "1":
-        search_level = LEVELS.LEVEL_1;
-        break;
-      case "2":
-        search_level = LEVELS.LEVEL_2;
-        depth = 2;
-        break;
-      case "3":
-        search_level = LEVELS.LEVEL_3;
-        depth = 3;
-        break;
-      case "4":
-        search_level = LEVELS.LEVEL_4;
-        depth = 4;
-        break;
-      case "5":
-        search_level = LEVELS.LEVEL_5;
-        depth = 5;
-        break;
-      case "6":
-        search_level = LEVELS.LEVEL_6;
-        depth = 6;
-        break;
-      case "7":
-        search_level = LEVELS.LEVEL_7;
-        depth = 7;
-        break;
-      case "8":
-        search_level = LEVELS.LEVEL_8;
-        depth = 8;
-        break;
-      case "9":
-        search_level = LEVELS.LEVEL_9;
-        depth = 9;
-        break;
-      case "10":
-        search_level = LEVELS.LEVEL_10;
-        depth = 10;
-        break;
-      default:
-        search_level = LEVELS.LEVEL_4;
-        depth = 4;
-        break;
-    }
-
-    let c_move = await comp.search(alg);
+    let c_move = await comp.search();
 
     if (c_move == -1) {
       playSound("end");
@@ -365,20 +316,24 @@ $(function () {
   });
 
   $(".saveGameData").click(function () {
-    var today = new Date();
-    var time =
-      today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
+    // Create element with <a> tag
+    const link = document.createElement("a");
+    const content = gameBoard.move_list.join(" ");
 
-    var serialized_state = JSON.stringify(gameBoard.game);
+    // Create a blog object with the file content which you want to add to the file
+    const file = new Blob([content], { type: "text/plain" });
 
-    $.ajax({
-      type: "POST",
-      url: "save_game_states.php",
-      data: serialized_state,
-      success: function (response) {
-        console.log(response);
-      },
-    });
+    // Add file content in the object URL
+    link.href = URL.createObjectURL(file);
+
+    // Add file name
+    link.download = "moves.txt";
+
+    // Add click event to <a> tag to save file.
+    link.click();
+    URL.revokeObjectURL(link.href);
+
+    console.log(gameBoard.move_list.join(" "));
   });
 
   $("#fenTitle").hover(function () {
