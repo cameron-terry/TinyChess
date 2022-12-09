@@ -1,8 +1,8 @@
 class MinimaxNode {
-  constructor(board, move) {
+  constructor(board, move, pieceSqTable) {
     this.board = board;
     this.move = move;
-    this.value = this.h();
+    this.value = this.h(pieceSqTable);
     this.side = board.side === COLORS.BLACK;
     this.children = [];
 
@@ -13,20 +13,25 @@ class MinimaxNode {
     }
   }
 
-  h() {
-    this.board.isMate(); // should set gameOver
-    if (this.board.gameOver) {
+  h(pieceSqTable) {
+    // is side to move checkmated?
+    if (
+      this.board.sqAttacked(this.board.findKingSq(this.board.side)) && // side to move is attacked
+      this.moves().length == 0 // has no moves
+    ) {
       return this.board.side === COLORS.BLACK ? 1000 : -1000;
-    } else {
-      const squares_attacked = this.board.squaresAttacked(true).length;
+    }
 
-      const weights = [1, 7, -7, -0.5, 0.5];
+    if (this.moves().length == 0) return 0; // stalemate
+    else {
+      const weights = [1, 20, -20, -0.5, 0.5, 1];
       const heuristics = [
         this.board.getMaterialCount(),
         this.board.sqAttacked(this.board.findKingSq(this.board.side ^ 1)),
         this.board.sqAttacked(this.board.findKingSq(this.board.side)),
-        squares_attacked,
+        this.board.squaresAttacked(true).length,
         this.board.squaresAttacked().length,
+        pieceSqTable.calculate(this.board), // endgame
       ];
 
       let score = 0;
@@ -48,19 +53,21 @@ class MinimaxNode {
   }
 
   isLeaf() {
-    return this.children.length == 0;
+    return this.children.length == 0 || this.moves().length == 0;
   }
 }
 
 class MinimaxTree {
-  constructor(boardFen, depth, side, clockStart) {
+  constructor(boardFen, depth, side, clockStart, pieceSqTable) {
     let rootBoard = new Board(); // create new board
     rootBoard.boardFromFen(boardFen); // set board to fen
     rootBoard.createFen(); // set fen
     rootBoard.side = side; // set side
 
+    this.pieceSqTable = pieceSqTable;
+
     this.depth = depth; // set depth
-    this.root = new MinimaxNode(rootBoard, null); // create root node
+    this.root = new MinimaxNode(rootBoard, null, this.pieceSqTable); // create root node
 
     this.nodesBuilt = 1;
     this.clockStart = clockStart;
@@ -90,7 +97,7 @@ class MinimaxTree {
           newBoard.side =
             newBoard.side == COLORS.WHITE ? COLORS.BLACK : COLORS.WHITE; // flip turn, since move was made
 
-          let newNode = new MinimaxNode(newBoard, move); // create a new node
+          let newNode = new MinimaxNode(newBoard, move, this.pieceSqTable); // create a new node
           this.nodesBuilt++;
 
           currentNode.children.push(newNode); // add new node to children
@@ -104,6 +111,75 @@ class MinimaxTree {
   }
 }
 
+class PieceSquareTable {
+  constructor() {
+    const boardSize = 48; // set board size
+
+    // piece square tables
+    this.whitePawnPST = new Array(boardSize);
+    this.blackPawnPST = new Array(boardSize);
+
+    const white_pawn_goal_squares = [
+      SQUARES.A6,
+      SQUARES.B6,
+      SQUARES.C6,
+      SQUARES.D6,
+    ];
+
+    const white_pawn_next_goal_squares = [
+      SQUARES.A5,
+      SQUARES.B5,
+      SQUARES.C5,
+      SQUARES.D5,
+    ];
+
+    const black_pawn_goal_squares = [
+      SQUARES.A1,
+      SQUARES.B1,
+      SQUARES.C1,
+      SQUARES.D1,
+    ];
+
+    const black_pawn_next_goal_squares = [
+      SQUARES.A2,
+      SQUARES.B2,
+      SQUARES.C2,
+      SQUARES.D2,
+    ];
+
+    for (var i = 0; i < boardSize; i++) {
+      this.whitePawnPST[i] = white_pawn_goal_squares.includes(i) ? 30 : 0;
+      this.blackPawnPST[i] = black_pawn_goal_squares.includes(i) ? 30 : 0;
+
+      this.whitePawnPST[i] = white_pawn_next_goal_squares.includes(i) ? 15 : 0;
+      this.blackPawnPST[i] = black_pawn_next_goal_squares.includes(i) ? 15 : 0;
+    }
+  }
+
+  calculate(board) {
+    let white_value = 0;
+    let black_value = 0;
+
+    for (let i in board.area) {
+      // piece is a white pawn?
+      white_value =
+        board.area[i].piece === PIECES.PAWN &&
+        board.area[i].color === COLORS.WHITE
+          ? white_value + this.whitePawnPST[i]
+          : white_value;
+
+      // piece is a black pawn?
+      black_value =
+        board.area[i].piece === PIECES.PAWN &&
+        board.area[i].color === COLORS.BLACK
+          ? black_value + this.blackPawnPST[i]
+          : black_value;
+    }
+
+    return white_value - black_value;
+  }
+}
+
 class AI {
   constructor(board, algorithm = "minimax", moves = 2) {
     this.board = board;
@@ -113,6 +189,8 @@ class AI {
       nodesBuilt: 0,
       nodesSearched: 0,
     };
+
+    this.PST = new PieceSquareTable();
   }
 
   setMoves(newMoves) {
@@ -196,7 +274,8 @@ class AI {
   }
 
   async search() {
-    if (this.board.generateMoveList() == 0) return 0;
+    const moves = this.board.generateMoveList();
+    if (moves == 0) return 0;
 
     if (this.algorithm === "random" || this.depth == 0) {
       const move = await this.randomMove();
@@ -213,7 +292,8 @@ class AI {
         this.board.fen,
         ply,
         this.board.side,
-        performance.now()
+        performance.now(),
+        this.PST
       );
 
       this.params.nodesBuilt = tree.nodesBuilt;
