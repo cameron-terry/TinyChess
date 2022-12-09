@@ -215,6 +215,7 @@ function makeMove(from, to, debug = false) {
  * @param {number} from - the square to move from
  * @param {number} to - the square to move to
  * @returns {boolean} if piece was moved
+ * TODO: need to add promotion logic
  */
 function movePiece(from, to, board) {
   // save in case move is not valid
@@ -227,6 +228,20 @@ function movePiece(from, to, board) {
   board.area[from].color = COLORS.NONE;
   board.area[to].piece = from_pce;
   board.area[to].color = board.side;
+
+  if (
+    [SQUARES.A1, SQUARES.B1, SQUARES.C1, SQUARES.D1].includes(to) &&
+    from_pce == PIECES.PAWN
+  ) {
+    board.area[to].piece = PIECES.QUEEN;
+  }
+
+  if (
+    [SQUARES.A6, SQUARES.B6, SQUARES.C6, SQUARES.D6].includes(to) &&
+    from_pce == PIECES.PAWN
+  ) {
+    board.area[to].piece = PIECES.QUEEN;
+  }
 
   //    console.log("in check: " + board.inCheck() + ", side white: " + (board.side == COLORS.WHITE));
   if (board.inCheck()) {
