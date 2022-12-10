@@ -34,38 +34,44 @@ class GameState {
   }
 }
 
+// A Square Class with properties of offboard: boolean, piece: PIECES, color: COLORS
 class Square {
-  /**
-   * The Square definition.
-   * @param {number} piece - the type of piece to occupy the square.
-   * Note that the piece type is an integer (see {@link defs.js})
-   * and that by default a square is considered offboard and no color/side controls it.
-   */
-  constructor(piece) {
-    /**
-     * @name Square#offboard - is the square offboard?
-     * @type boolean
-     * @default true
-     */
-    this.offboard = true;
-    /**
-     * @name Square#piece - the piece controlling the square
-     * @type number
-     */
-    this.piece = piece;
-    /**
-     * @name Square#color - the side controlling the square
-     * @type number
-     * @default COLORS.NONE
-     */
-    this.color = COLORS.NONE;
+  constructor(piecename, offboard = true) {
+    this.offboard = offboard; // set square offboard by default
+    ({ color: this.color, piece: this.piece } = piecename); // set color and piece from PIECENAMES
+  }
+
+  // check to see if Square is offboard
+  isOffboard() {
+    return this.offboard;
+  }
+
+  // check to see if Square is onboard
+  isOnboard() {
+    return !this.offboard;
+  }
+
+  setOnboard() {
+    this.offboard = false;
+  }
+
+  // set the PIECENAME of the Square
+  setByPieceName(piecename) {
+    ({ color: this.color, piece: this.piece } = piecename);
+  }
+
+  // find a corresponding value in PIECENAMES for the Square
+  findPieceName() {
+    // find the PIECENAME that matches the Square's color and piece
+    return Object.keys(PIECENAMES).find(
+      (key) =>
+        PIECENAMES[key].color === this.color &&
+        PIECENAMES[key].piece === this.piece
+    );
   }
 }
 
 class Board {
-  /**
-   * The Board definition.
-   */
   constructor() {
     // will hold GameStates
     this.game = [];
@@ -111,212 +117,95 @@ class Board {
     this.gameOver = false;
 
     /* set all squares offboard */
-    for (var i = 0; i < this.area.length; i++) {
-      this.area[i] = new Square(PIECES.EMPTY);
+    for (let i = 0; i < this.area.length; i++) {
+      this.area[i] = new Square(PIECENAMES.EMPTY);
     }
 
     /* set main squares to pieces */
-    for (var j = 0; j < this.area.length; j++) {
-      for (var val in SQUARES) {
-        /* square found in SQUARES dict (see {@link defs.js}) */
-        if (SQUARES[val] == j) {
-          this.area[j].offboard = false;
-
-          /* populate square if needed */
-          switch (j) {
-            case SQUARES.A1:
-              this.area[j].piece = PIECES.ROOK;
-              this.area[j].color = COLORS.WHITE;
-              break;
-            case SQUARES.A2:
-              this.area[j].piece = PIECES.PAWN;
-              this.area[j].color = COLORS.WHITE;
-              break;
-            case SQUARES.A5:
-              this.area[j].piece = PIECES.PAWN;
-              this.area[j].color = COLORS.BLACK;
-              break;
-            case SQUARES.A6:
-              this.area[j].piece = PIECES.ROOK;
-              this.area[j].color = COLORS.BLACK;
-              break;
-            case SQUARES.B1:
-              this.area[j].piece = PIECES.KNIGHT;
-              this.area[j].color = COLORS.WHITE;
-              break;
-            case SQUARES.B2:
-              this.area[j].piece = PIECES.PAWN;
-              this.area[j].color = COLORS.WHITE;
-              break;
-            case SQUARES.B5:
-              this.area[j].piece = PIECES.PAWN;
-              this.area[j].color = COLORS.BLACK;
-              break;
-            case SQUARES.B6:
-              this.area[j].piece = PIECES.KNIGHT;
-              this.area[j].color = COLORS.BLACK;
-              break;
-            case SQUARES.C1:
-              this.area[j].piece = PIECES.BISHOP;
-              this.area[j].color = COLORS.WHITE;
-              break;
-            case SQUARES.C2:
-              this.area[j].piece = PIECES.PAWN;
-              this.area[j].color = COLORS.WHITE;
-              break;
-            case SQUARES.C5:
-              this.area[j].piece = PIECES.PAWN;
-              this.area[j].color = COLORS.BLACK;
-              break;
-            case SQUARES.C6:
-              this.area[j].piece = PIECES.BISHOP;
-              this.area[j].color = COLORS.BLACK;
-              break;
-            case SQUARES.D1:
-              this.area[j].piece = PIECES.KING;
-              this.area[j].color = COLORS.WHITE;
-              break;
-            case SQUARES.D2:
-              this.area[j].piece = PIECES.PAWN;
-              this.area[j].color = COLORS.WHITE;
-              break;
-            case SQUARES.D5:
-              this.area[j].piece = PIECES.PAWN;
-              this.area[j].color = COLORS.BLACK;
-              break;
-            case SQUARES.D6:
-              this.area[j].piece = PIECES.KING;
-              this.area[j].color = COLORS.BLACK;
-              break;
-            default:
-              break;
-          }
-        }
-      }
+    for (let j = 0; j < this.area.length; j++) {
+      // check if j should be an onboard square
+      if (Object.values(SQUARES).includes(j)) this.area[j].setOnboard();
+      // check if j is in startingPosition
+      if (startingPosition.hasOwnProperty(j))
+        this.area[j].setByPieceName(startingPosition[j]);
     }
 
-    this.createFen();
+    // create a FEN for the board
+    this.fen = this.createFen();
   }
 
   /**
    * Adds a new GameState to the game array.
    */
   addNewBoardState() {
-    this.boardStates.push(this.fen);
-
-    var state = new GameState();
-
-    var board = JSON.parse(JSON.stringify(this.area)); // deep copying is kinda annoying in js
-
-    state.board = Object.assign({}, board);
-
-    state.fen = this.fen;
-
-    // TODO: note, [--.length] decreases the array by 1
-
-    this.game.push(state);
+    this.boardStates.push(this.fen); // add the current fen to the boardStates array
+    var state = new GameState(); // create a new GameState
+    var board = JSON.parse(JSON.stringify(this.area)); // create a deep copy of the board
+    state.board = Object.assign({}, board); // assign the board to the GameState
+    state.fen = this.fen; // assign the fen to the GameState
+    this.game.push(state); // add the GameState to the game array
   }
 
+  /**
+   * Create a board from a fen string.
+   * @param {*} fen FEN string
+   */
   boardFromFen(fen) {
-    var i = SQUARES.A6;
+    // current square
+    let i = SQUARES.A6;
 
-    for (var letter = 0; letter < fen.length; letter++) {
-      var current_letter = fen[letter];
+    // loop through fen
+    for (let letter in fen) {
+      // get current letter
+      const current_letter = fen[letter];
 
-      switch (current_letter) {
-        case "P":
-          this.area[i].piece = PIECES.PAWN;
-          this.area[i].color = COLORS.WHITE;
-          break;
-        case "R":
-          this.area[i].piece = PIECES.ROOK;
-          this.area[i].color = COLORS.WHITE;
-          break;
-        case "N":
-          this.area[i].piece = PIECES.KNIGHT;
-          this.area[i].color = COLORS.WHITE;
-          break;
-        case "B":
-          this.area[i].piece = PIECES.BISHOP;
-          this.area[i].color = COLORS.WHITE;
-          break;
-        case "K":
-          this.area[i].piece = PIECES.KING;
-          this.area[i].color = COLORS.WHITE;
-          break;
-        case "Q":
-          this.area[i].piece = PIECES.QUEEN;
-          this.area[i].color = COLORS.WHITE;
-          break;
-        case "p":
-          this.area[i].piece = PIECES.PAWN;
-          this.area[i].color = COLORS.BLACK;
-          break;
-        case "r":
-          this.area[i].piece = PIECES.ROOK;
-          this.area[i].color = COLORS.BLACK;
-          break;
-        case "n":
-          this.area[i].piece = PIECES.KNIGHT;
-          this.area[i].color = COLORS.BLACK;
-          break;
-        case "b":
-          this.area[i].piece = PIECES.BISHOP;
-          this.area[i].color = COLORS.BLACK;
-          break;
-        case "k":
-          this.area[i].piece = PIECES.KING;
-          this.area[i].color = COLORS.BLACK;
-          break;
-        case "q":
-          this.area[i].piece = PIECES.QUEEN;
-          this.area[i].color = COLORS.BLACK;
-          break;
-        case "1":
-          this.area[i].piece = PIECES.EMPTY;
-          this.area[i].color = COLORS.NONE;
-          break;
-        case "2":
-          for (var j = 0; j < 2; j++) {
-            if (!this.area[i + j].offboard) {
-              this.area[i + j].piece = PIECES.EMPTY;
-              this.area[i + j].color = COLORS.NONE;
-            } else {
-              throw "Something went wrong parsing the FEN.";
-            }
-          }
-          i += 1;
-          break;
-        case "3":
-          for (var j = 0; j < 3; j++) {
-            if (!this.area[i + j].offboard) {
-              this.area[i + j].piece = PIECES.EMPTY;
-              this.area[i + j].color = COLORS.NONE;
-            } else {
-              throw "Something went wrong parsing the FEN.";
-            }
-          }
-          i += 2;
-          break;
-        case "4":
-          for (var j = 0; j < 4; j++) {
-            if (!this.area[i + j].offboard) {
-              this.area[i + j].piece = PIECES.EMPTY;
-              this.area[i + j].color = COLORS.NONE;
-            } else {
-              throw "Something went wrong parsing the FEN.";
-            }
-          }
-          i += 3;
-          break;
-        case "/":
-          i += 1;
-          break;
-        default:
-          throw "Input not recognized.";
-          valid_input = false;
-          break;
+      // go past left and right offboard square and skip if current letter is a slash
+      if (current_letter == "/") {
+        i += 2;
+        continue;
       }
+
+      // throw an error if current letter is not in fenCharacterRepresentation
+      if (!fenCharacterRepresentation.hasOwnProperty(current_letter)) {
+        throw new Error("Invalid FEN");
+      }
+
+      // check if current letter is a piece
+      if (fenCharacterRepresentation.hasOwnProperty(current_letter)) {
+        // check if square is onboard
+        if (this.area[i].isOnboard()) {
+          // if so, set square to piece
+          this.area[i].setByPieceName(
+            fenCharacterRepresentation[current_letter]
+          );
+        } else {
+          console.log(fen);
+          throw new Error("Invalid FEN");
+        }
+      }
+
+      // check if current letter is a number and in fenCharacterRepresentation
+      if (
+        parseInt(current_letter) &&
+        fenCharacterRepresentation.hasOwnProperty(current_letter)
+      ) {
+        // if so, add current_letter blank squares
+        for (let j = 0; j < parseInt(current_letter); j++) {
+          // check if square is onboard
+          if (this.area[i + j].isOnboard()) {
+            // if so, set square to empty
+            this.area[i + j].setByPieceName(PIECENAMES.EMPTY);
+          } else {
+            throw new Error("Invalid FEN");
+          }
+        }
+
+        // skip 1 less than the number of loops ran above
+        // because we will always go to the next square after any checks
+        i += parseInt(current_letter) - 1;
+      }
+
+      // next square
       i++;
     }
   }
@@ -325,79 +214,133 @@ class Board {
    * Create a FEN of the current game state.
    */
   createFen() {
-    var current_fen = "";
-    var rank = 0;
-    for (var i = 0; i < this.area.length; i++) {
-      var sq = this.area[i];
+    // create a new fen
+    let fen = "";
 
-      if (!sq.offboard) {
-        switch (sq.piece) {
-          case PIECES.EMPTY:
-            current_fen += "-";
-            break;
-          case PIECES.KING:
-            if (sq.color == COLORS.WHITE) {
-              current_fen += "K";
-            } else {
-              current_fen += "k";
-            }
-            break;
-          case PIECES.ROOK:
-            if (sq.color == COLORS.WHITE) {
-              current_fen += "R";
-            } else {
-              current_fen += "r";
-            }
-            break;
-          case PIECES.KNIGHT:
-            if (sq.color == COLORS.WHITE) {
-              current_fen += "N";
-            } else {
-              current_fen += "n";
-            }
-            break;
-          case PIECES.BISHOP:
-            if (sq.color == COLORS.WHITE) {
-              current_fen += "B";
-            } else {
-              current_fen += "b";
-            }
-            break;
-          case PIECES.PAWN:
-            if (sq.color == COLORS.WHITE) {
-              current_fen += "P";
-            } else {
-              current_fen += "p";
-            }
-            break;
-          case PIECES.QUEEN:
-            if (sq.color == COLORS.WHITE) {
-              current_fen += "Q";
-            } else {
-              current_fen += "q";
-            }
-            break;
-          default:
-            break;
-        }
-        rank += 1;
+    // keep track of which rank we are on
+    let current_rank = 0;
 
-        if (rank % 4 == 0) {
-          current_fen += "/";
+    // loop through the board
+    for (let i = 0; i < this.area.length; i++) {
+      // get current square
+      const sq = this.area[i];
+
+      // check if square is onboard
+      if (sq.isOnboard()) {
+        // check if square piecename key is in PIECENAMES
+        const pieceName = sq.findPieceName(); // e.g pieceName = WHITEROOK
+        if (PIECENAMES.hasOwnProperty(pieceName)) {
+          // if so, add the fen character of the piece (e.g. "R") to the fen
+          for (const [key, value] of Object.entries(fenCharacterRepresentation)) {
+            if (value == PIECENAMES[pieceName]) {
+              // if the key is a number, add that many dashes
+              if (parseInt(key)) {
+                for (let j = 0; j < parseInt(key); j++) {
+                  fen += "-";
+                }
+              } else {
+                fen += key;
+              }
+              break;
+            }
+          }
+
+          // increment the current rank
+          current_rank++;
+
+          // every 4 squares, add a slash to the fen
+          if (current_rank % 4 == 0) fen += "/";
         }
       }
     }
 
-    // remove last "/"
-    current_fen = current_fen.slice(0, -1);
-    // change - to 1, 2, etc
-    current_fen = replaceAll(current_fen, "----", "4");
-    current_fen = replaceAll(current_fen, "---", "3");
-    current_fen = replaceAll(current_fen, "--", "2");
-    current_fen = replaceAll(current_fen, "-", "1");
-    this.fen = current_fen;
+    // remove last slash from fen
+    fen = fen.slice(0, -1);
 
-    return this.fen;
+    // replace all consecutive dashes with the number of dashes
+    fen = fen.replace(/-+/g, function (match) {
+      return match.length;
+    });
+
+    // set the fen to the new one created
+    this.fen = fen;
+
+    // return the fen
+    return fen;
+
+    // var current_fen = "";
+    // var rank = 0;
+    // for (var i = 0; i < this.area.length; i++) {
+    //   var sq = this.area[i];
+
+    //   if (!sq.offboard) {
+    //     switch (sq.piece) {
+    //       case PIECES.EMPTY:
+    //         current_fen += "-";
+    //         break;
+    //       case PIECES.KING:
+    //         if (sq.color == COLORS.WHITE) {
+    //           current_fen += "K";
+    //         } else {
+    //           current_fen += "k";
+    //         }
+    //         break;
+    //       case PIECES.ROOK:
+    //         if (sq.color == COLORS.WHITE) {
+    //           current_fen += "R";
+    //         } else {
+    //           current_fen += "r";
+    //         }
+    //         break;
+    //       case PIECES.KNIGHT:
+    //         if (sq.color == COLORS.WHITE) {
+    //           current_fen += "N";
+    //         } else {
+    //           current_fen += "n";
+    //         }
+    //         break;
+    //       case PIECES.BISHOP:
+    //         if (sq.color == COLORS.WHITE) {
+    //           current_fen += "B";
+    //         } else {
+    //           current_fen += "b";
+    //         }
+    //         break;
+    //       case PIECES.PAWN:
+    //         if (sq.color == COLORS.WHITE) {
+    //           current_fen += "P";
+    //         } else {
+    //           current_fen += "p";
+    //         }
+    //         break;
+    //       case PIECES.QUEEN:
+    //         if (sq.color == COLORS.WHITE) {
+    //           current_fen += "Q";
+    //         } else {
+    //           current_fen += "q";
+    //         }
+    //         break;
+    //       default:
+    //         break;
+    //     }
+    //     rank += 1;
+
+    //     if (rank % 4 == 0) {
+    //       current_fen += "/";
+    //     }
+    //   }
+    // }
+
+    // // remove last "/"
+    // current_fen = current_fen.slice(0, -1);
+    // // change - to 1, 2, etc
+    // current_fen = replaceAll(current_fen, "----", "4");
+    // current_fen = replaceAll(current_fen, "---", "3");
+    // current_fen = replaceAll(current_fen, "--", "2");
+    // current_fen = replaceAll(current_fen, "-", "1");
+    // this.fen = current_fen;
+
+    // return current_fen;
   }
 
   /*
@@ -815,6 +758,7 @@ class Board {
   /**
    * Checks to see if a given square is attacked by the opposing side.
    * @return if square is attacked by opposing side
+   * TODO: rewrite the code (no vars)
    */
   sqAttacked(to_sq) {
     // check opponent's moves
@@ -862,6 +806,8 @@ class Board {
 
     return this.sqAttacked(king_sq);
   }
+
+  findPiece() {}
 
   // TODO: stalemate
   /**
