@@ -261,7 +261,7 @@ $(function () {
     header.innerHTML = inner_html;
 
     if (ai_on) {
-      comp.aiBoard.setBoard(gameBoard);
+      comp.setBoard(gameBoard.fen);
       searchComp(comp, alg);
     }
   });
@@ -368,7 +368,12 @@ function resetColors(sq1, sq2) {
 }
 
 function resetGame() {
+  // set comp slider to off state
+  $('label > input[type="checkbox"]').prop("checked", false);
+  ai_on = false;
+
   gameBoard = new Board();
+  comp = new AI(gameBoard);
 
   var table = document.querySelector("table");
   var table_len = table.rows.length;
@@ -381,286 +386,6 @@ function resetGame() {
   gameBoard.createFen();
   updateFenGUI();
   gameBoard.side = COLORS.WHITE;
-}
-
-function randomGame() {
-  var are_white_pawns = Math.random() < RAND_PIECE_VALUES.WHITE_PAWNS;
-  var are_black_pawns = Math.random() < RAND_PIECE_VALUES.BLACK_PAWNS;
-  var is_white_bishop = Math.random() < RAND_PIECE_VALUES.WHITE_BISHOP;
-  var is_black_bishop = Math.random() < RAND_PIECE_VALUES.BLACK_BISHOP;
-  var is_white_knight = Math.random() < RAND_PIECE_VALUES.WHITE_KNIGHT;
-  var is_black_knight = Math.random() < RAND_PIECE_VALUES.BLACK_KNIGHT;
-  var is_white_rook = Math.random() < RAND_PIECE_VALUES.WHITE_ROOK;
-  var is_black_rook = Math.random() < RAND_PIECE_VALUES.BLACK_ROOK;
-
-  var num_white_pawns;
-  var num_black_pawns;
-
-  var is_white_queen;
-  var is_black_queen;
-
-  if (are_white_pawns) {
-    if (Math.random() < RAND_PIECE_VALUES.WHITE_PAWNS_4) {
-      num_white_pawns = 4;
-    } else if (Math.random() < RAND_PIECE_VALUES.WHITE_PAWNS_3) {
-      num_white_pawns = 3;
-    } else if (Math.random() < RAND_PIECE_VALUES.WHITE_PAWNS_2) {
-      num_white_pawns = 2;
-    } else {
-      num_white_pawns = 1;
-    }
-  } else {
-    if (Math.random() < RAND_PIECE_VALUES.WHITE_QUEEN) {
-      is_white_queen = true;
-    }
-  }
-
-  if (are_black_pawns) {
-    if (Math.random() < RAND_PIECE_VALUES.BLACK_PAWNS_4) {
-      num_white_pawns = 4;
-    } else if (Math.random() < RAND_PIECE_VALUES.BLACK_PAWNS_3) {
-      num_white_pawns = 3;
-    } else if (Math.random() < RAND_PIECE_VALUES.BLACK_PAWNS_2) {
-      num_white_pawns = 2;
-    } else {
-      num_white_pawns = 1;
-    }
-  } else {
-    if (Math.random() < RAND_PIECE_VALUES.BLACK_QUEEN) {
-      is_black_queen = true;
-    }
-  }
-
-  // clear board
-  gameBoard.area = new Array(48);
-
-  for (var i = 0; i < gameBoard.area.length; i++) {
-    gameBoard.area[i] = new Square(PIECES.EMPTY);
-    if (i >= SQUARES.A6 && i <= SQUARES.D1) {
-      if (!(i == 11 || i == 17 || i == 23 || i == 29 || i == 35)) {
-        // right offboard squares
-        if (!(i == 12 || i == 18 || i == 24 || i == 30 || i == 36)) {
-          // left offboard squares
-          gameBoard.area[i].offboard = false;
-        }
-      }
-    }
-  }
-
-  // find king homes
-  var white_king_sq;
-  var black_king_sq;
-
-  // make sure they're not next to each other!
-  var next_to_each_other =
-    white_king_sq - 6 == black_king_sq ||
-    white_king_sq + 6 == black_king_sq ||
-    white_king_sq - 1 == black_king_sq ||
-    white_king_sq + 1 == black_king_sq ||
-    white_king_sq - 5 == black_king_sq ||
-    white_king_sq + 5 == black_king_sq ||
-    white_king_sq - 7 == black_king_sq ||
-    white_king_sq + 7 == black_king_sq;
-
-  do {
-    white_king_sq = getRandomSquare();
-    gameBoard.area[white_king_sq].piece = PIECES.KING;
-    gameBoard.area[white_king_sq].color = COLORS.WHITE;
-  } while (gameBoard.area[white_king_sq].offboard);
-
-  do {
-    black_king_sq = getRandomSquare();
-
-    next_to_each_other =
-      white_king_sq - 6 == black_king_sq ||
-      white_king_sq + 6 == black_king_sq ||
-      white_king_sq - 1 == black_king_sq ||
-      white_king_sq + 1 == black_king_sq ||
-      white_king_sq - 5 == black_king_sq ||
-      white_king_sq + 5 == black_king_sq ||
-      white_king_sq - 7 == black_king_sq ||
-      white_king_sq + 7 == black_king_sq;
-
-    gameBoard.area[black_king_sq].piece = PIECES.KING;
-    gameBoard.area[black_king_sq].color = COLORS.BLACK;
-  } while (gameBoard.area[black_king_sq].offboard && next_to_each_other);
-
-  // place pawns
-  var piece_placed;
-  var random_sq;
-  var valid_spot = false;
-
-  if (are_white_pawns) {
-    for (var i = 0; i < num_white_pawns; i++) {
-      do {
-        random_sq = getRandomSquare();
-        valid_spot =
-          gameBoard.area[random_sq].piece == PIECES.EMPTY &&
-          !gameBoard.area[random_sq].offboard &&
-          random_sq != SQUARES.A6 &&
-          random_sq != SQUARES.B6 &&
-          random_sq != SQUARES.C6 &&
-          random_sq != SQUARES.D6;
-      } while (!valid_spot);
-
-      gameBoard.area[random_sq].piece = PIECES.PAWN;
-      gameBoard.area[random_sq].color = COLORS.WHITE;
-    }
-  }
-
-  if (are_black_pawns) {
-    for (var i = 0; i < num_black_pawns; i++) {
-      do {
-        random_sq = getRandomSquare();
-        valid_spot =
-          gameBoard.area[random_sq].piece == PIECES.EMPTY &&
-          !gameBoard.area[random_sq].offboard &&
-          random_sq != SQUARES.A1 &&
-          random_sq != SQUARES.B1 &&
-          random_sq != SQUARES.C1 &&
-          random_sq != SQUARES.D1;
-      } while (!valid_spot);
-
-      gameBoard.area[random_sq].piece = PIECES.PAWN;
-      gameBoard.area[random_sq].color = COLORS.BLACK;
-    }
-  }
-
-  // place queens
-  if (is_white_queen) {
-    do {
-      random_sq = getRandomSquare();
-      valid_spot =
-        gameBoard.area[random_sq].piece == PIECES.EMPTY &&
-        !gameBoard.area[random_sq].offboard;
-    } while (!valid_spot);
-
-    gameBoard.area[random_sq].piece = PIECES.QUEEN;
-    gameBoard.area[random_sq].color = COLORS.WHITE;
-  }
-
-  if (is_black_queen) {
-    do {
-      random_sq = getRandomSquare();
-      valid_spot =
-        gameBoard.area[random_sq].piece == PIECES.EMPTY &&
-        !gameBoard.area[random_sq].offboard;
-    } while (!valid_spot);
-
-    gameBoard.area[random_sq].piece = PIECES.QUEEN;
-    gameBoard.area[random_sq].color = COLORS.BLACK;
-  }
-
-  // place rooks
-  if (is_white_rook) {
-    do {
-      random_sq = getRandomSquare();
-      valid_spot =
-        gameBoard.area[random_sq].piece == PIECES.EMPTY &&
-        !gameBoard.area[random_sq].offboard;
-    } while (!valid_spot);
-
-    gameBoard.area[random_sq].piece = PIECES.ROOK;
-    gameBoard.area[random_sq].color = COLORS.WHITE;
-  }
-
-  if (is_black_rook) {
-    do {
-      random_sq = getRandomSquare();
-      valid_spot =
-        gameBoard.area[random_sq].piece == PIECES.EMPTY &&
-        !gameBoard.area[random_sq].offboard;
-    } while (!valid_spot);
-
-    gameBoard.area[random_sq].piece = PIECES.ROOK;
-    gameBoard.area[random_sq].color = COLORS.BLACK;
-  }
-
-  // place bishops
-  if (is_white_bishop) {
-    do {
-      random_sq = getRandomSquare();
-      valid_spot =
-        gameBoard.area[random_sq].piece == PIECES.EMPTY &&
-        !gameBoard.area[random_sq].offboard;
-    } while (!valid_spot);
-
-    gameBoard.area[random_sq].piece = PIECES.BISHOP;
-    gameBoard.area[random_sq].color = COLORS.WHITE;
-  }
-
-  if (is_black_bishop) {
-    do {
-      random_sq = getRandomSquare();
-      valid_spot =
-        gameBoard.area[random_sq].piece == PIECES.EMPTY &&
-        !gameBoard.area[random_sq].offboard;
-    } while (!valid_spot);
-
-    gameBoard.area[random_sq].piece = PIECES.BISHOP;
-    gameBoard.area[random_sq].color = COLORS.BLACK;
-  }
-
-  // place knights
-  if (is_white_knight) {
-    do {
-      random_sq = getRandomSquare();
-      valid_spot =
-        gameBoard.area[random_sq].piece == PIECES.EMPTY &&
-        !gameBoard.area[random_sq].offboard;
-    } while (!valid_spot);
-
-    gameBoard.area[random_sq].piece = PIECES.KNIGHT;
-    gameBoard.area[random_sq].color = COLORS.WHITE;
-  }
-
-  if (is_black_knight) {
-    do {
-      random_sq = getRandomSquare();
-      valid_spot =
-        gameBoard.area[random_sq].piece == PIECES.EMPTY &&
-        !gameBoard.area[random_sq].offboard;
-    } while (!valid_spot);
-
-    gameBoard.area[random_sq].piece = PIECES.KNIGHT;
-    gameBoard.area[random_sq].color = COLORS.BLACK;
-  }
-
-  updateBoard();
-  gameBoard.createFen();
-  console.log(gameBoard.fen);
-  updateFenGUI();
-
-  $("#userInputFen").css("border", "2px solid #000");
-
-  gameBoard.side = document.getElementById("side").checked;
-  gameBoard.whiteCastle = document.getElementById("WhiteCastle").checked;
-  gameBoard.blackCastle = document.getElementById("BlackCastle").checked;
-  gameBoard.checkState();
-
-  // quick check for check
-  if (gameBoard.inCheck()) {
-    var king_sq = "#" + gameBoard.printSq(gameBoard.findKingSq(gameBoard.side));
-    king_pic =
-      gameBoard.side == COLORS.WHITE ? "img/wK_check.png" : "img/bK_check.png";
-    $(king_sq).attr("src", king_pic);
-  }
-
-  if (gameBoard.gameOver) {
-    gameBoard.side = -1;
-  } else {
-    gameBoard.side ^= 1;
-    gameBoard.checkState();
-
-    if (gameBoard.gameOver) {
-      gameBoard.side = -1;
-    } else {
-      gameBoard.side ^= 1;
-    }
-  }
-
-  // clear move list
-  gameBoard.move_list = [];
 }
 
 /**
@@ -682,13 +407,8 @@ function checkMove() {
     if (move_made) {
       playSound("move");
 
-      var white_castled = fromSq == "d1" && toSq == "b1";
-      var black_castled = fromSq == "d6" && toSq == "b6";
-      if (white_castled || black_castled) {
-        gameBoard.move_list.push("O-O");
-      } else {
-        gameBoard.move_list.push(fromSq + toSq);
-      }
+      // update game state
+      gameBoard.move_list.push(fromSq + toSq);
 
       // set last game state move to in-game move
       gameBoard.game[gameBoard.game.length - 1].move =
@@ -812,8 +532,8 @@ function getUserFen() {
   $("#userInputFen").css("border", "2px solid #000");
 
   gameBoard.side = document.getElementById("side").checked;
-  gameBoard.whiteCastle = document.getElementById("WhiteCastle").checked;
-  gameBoard.blackCastle = document.getElementById("BlackCastle").checked;
+  // gameBoard.whiteCastle = document.getElementById("WhiteCastle").checked;
+  // gameBoard.blackCastle = document.getElementById("BlackCastle").checked;
   gameBoard.checkState();
 
   // quick check for check
