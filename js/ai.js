@@ -6,6 +6,8 @@ class MinimaxNode {
     this.side = board.side === COLORS.BLACK;
     this.children = [];
 
+    this.bestChild = null;
+
     if (move !== null) {
       const t_board = new Board();
       this.move_name =
@@ -26,12 +28,17 @@ class MinimaxNode {
     else {
       const weights = [1, 20, -20, -0.5, 0.5, 1];
       const heuristics = [
+        // forcing moves
         this.board.getMaterialCount(),
         this.board.sqAttacked(this.board.findKingSq(this.board.side ^ 1)),
         this.board.sqAttacked(this.board.findKingSq(this.board.side)),
+
+        // square control
         this.board.squaresAttacked(true).length,
         this.board.squaresAttacked().length,
-        pieceSqTable.calculate(this.board), // endgame
+
+        // endgame
+        pieceSqTable.calculate(this.board), 
       ];
 
       let score = 0;
@@ -232,7 +239,7 @@ class AI {
         // new largest min
         if (value > bestVal) {
           bestVal = value;
-          bestChild = node.children[child_idx];
+          node.bestChild = node.children[child_idx];
         }
 
         // alpha-beta pruning
@@ -240,7 +247,7 @@ class AI {
         if (beta <= alpha) break;
       }
 
-      return [bestChild, bestVal];
+      return [node.bestChild, bestVal];
 
       // min wants to pick the smallest max
     } else {
@@ -262,6 +269,7 @@ class AI {
         if (value < bestVal) {
           bestVal = value;
           bestChild = node.children[child_idx];
+          node.bestChild = bestChild;
         }
 
         // alpha-beta pruning
@@ -269,7 +277,7 @@ class AI {
         if (beta <= alpha) break;
       }
 
-      return [bestChild, bestVal];
+      return [node.bestChild, bestVal];
     }
   }
 
@@ -312,9 +320,24 @@ class AI {
         performance.now()
       );
 
+      // show best line from minimax
+      let bestLine = [];
+
+      let current = bestChild;
+
+      // add move to bestLine
+      bestLine.push(this.board.moveToStr(current.move));
+
+      while (current.bestChild != null) {
+        current = current.bestChild;
+        bestLine.push(this.board.moveToStr(current.move));
+      }
+
       console.log(
         `nodes built -> searched at ply ${ply}: ${this.params.nodesBuilt} -> ${this.params.nodesSearched}, eval: ${bestScore}`
       );
+
+      // console.log(bestLine.join(' '));
       return bestChild.move;
     }
   }

@@ -4,8 +4,6 @@
  * @version 0.1
  */
 
-// TODO: make values of key a list? e.g. A6: ["a6", 7]
-
 /**
  * A mapping between square names and their index in {@link Board#area|Board.area}.
  * @enum {number}
@@ -185,12 +183,12 @@ var MOVEMENTS = {
 };
 
 var SCORES = {
-  PAWN: 10,
-  KNIGHT: 30,
-  BISHOP: 35,
-  ROOK: 50,
-  QUEEN: 90,
-  KING: 900,
+  [PIECES.PAWN]: 10,
+  [PIECES.KNIGHT]: 30,
+  [PIECES.BISHOP]: 35,
+  [PIECES.ROOK]: 50,
+  [PIECES.QUEEN]: 90,
+  [PIECES.KING]: 900,
 };
 
 /**

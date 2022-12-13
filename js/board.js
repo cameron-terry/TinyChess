@@ -135,6 +135,77 @@ class Board {
   }
 
   /**
+   * Returns a square name from location in gameBoard.area.
+   * @param {number} sq - the square to find
+   * @return the square (lowercase)
+   */
+  printSq(sq) {
+    for (let val in SQUARES) {
+      if (SQUARES[val] == sq) {
+        return val.toLowerCase();
+      }
+    }
+  }
+
+  moveToStr(move) {
+    let moveString = "";
+    let from = this.printSq(move[0]);
+    let to = this.printSq(move[1]);
+    moveString = from + to;
+    return moveString;
+  }
+
+  /**
+   * Print the state of the board.
+   */
+  printBoard() {
+    // create a variable to hold the text version of the board
+    let board_pic = "";
+
+    // create a variable to hold the rank number
+    let rank = 0;
+
+    // loop through the board
+    for (let i = 0; i < this.area.length; i++) {
+      // get the square
+      let sq = this.area[i];
+
+      // if square is onboard
+      if (sq.isOnboard()) {
+        // get the PIECENAME
+        let pieceName = sq.findPieceName();
+
+        if (PIECENAMES.hasOwnProperty(pieceName)) {
+          // if so, add the fen character of the piece (e.g. "R") to the fen
+          for (const [key, value] of Object.entries(
+            fenCharacterRepresentation
+          )) {
+            if (value == PIECENAMES[pieceName]) {
+              // if the key is a number, add that many dashes
+              if (parseInt(key)) {
+                board_pic += "- ";
+              } else {
+                board_pic += key + " ";
+              }
+              break;
+            }
+          }
+        }
+
+        // increase the rank by 1
+        rank++;
+
+        // if rank if divisible by 4, add a newline to board_pic
+        if (rank % 4 == 0) {
+          board_pic += "\n";
+        }
+      }
+    }
+
+    console.log(board_pic);
+  }
+
+  /**
    * Adds a new GameState to the game array.
    */
   addNewBoardState() {
@@ -231,7 +302,9 @@ class Board {
         const pieceName = sq.findPieceName(); // e.g pieceName = WHITEROOK
         if (PIECENAMES.hasOwnProperty(pieceName)) {
           // if so, add the fen character of the piece (e.g. "R") to the fen
-          for (const [key, value] of Object.entries(fenCharacterRepresentation)) {
+          for (const [key, value] of Object.entries(
+            fenCharacterRepresentation
+          )) {
             if (value == PIECENAMES[pieceName]) {
               // if the key is a number, add that many dashes
               if (parseInt(key)) {
@@ -267,87 +340,49 @@ class Board {
 
     // return the fen
     return fen;
+  }
 
-    // var current_fen = "";
-    // var rank = 0;
-    // for (var i = 0; i < this.area.length; i++) {
-    //   var sq = this.area[i];
-
-    //   if (!sq.offboard) {
-    //     switch (sq.piece) {
-    //       case PIECES.EMPTY:
-    //         current_fen += "-";
-    //         break;
-    //       case PIECES.KING:
-    //         if (sq.color == COLORS.WHITE) {
-    //           current_fen += "K";
-    //         } else {
-    //           current_fen += "k";
-    //         }
-    //         break;
-    //       case PIECES.ROOK:
-    //         if (sq.color == COLORS.WHITE) {
-    //           current_fen += "R";
-    //         } else {
-    //           current_fen += "r";
-    //         }
-    //         break;
-    //       case PIECES.KNIGHT:
-    //         if (sq.color == COLORS.WHITE) {
-    //           current_fen += "N";
-    //         } else {
-    //           current_fen += "n";
-    //         }
-    //         break;
-    //       case PIECES.BISHOP:
-    //         if (sq.color == COLORS.WHITE) {
-    //           current_fen += "B";
-    //         } else {
-    //           current_fen += "b";
-    //         }
-    //         break;
-    //       case PIECES.PAWN:
-    //         if (sq.color == COLORS.WHITE) {
-    //           current_fen += "P";
-    //         } else {
-    //           current_fen += "p";
-    //         }
-    //         break;
-    //       case PIECES.QUEEN:
-    //         if (sq.color == COLORS.WHITE) {
-    //           current_fen += "Q";
-    //         } else {
-    //           current_fen += "q";
-    //         }
-    //         break;
-    //       default:
-    //         break;
-    //     }
-    //     rank += 1;
-
-    //     if (rank % 4 == 0) {
-    //       current_fen += "/";
-    //     }
-    //   }
-    // }
-
-    // // remove last "/"
-    // current_fen = current_fen.slice(0, -1);
-    // // change - to 1, 2, etc
-    // current_fen = replaceAll(current_fen, "----", "4");
-    // current_fen = replaceAll(current_fen, "---", "3");
-    // current_fen = replaceAll(current_fen, "--", "2");
-    // current_fen = replaceAll(current_fen, "-", "1");
-    // this.fen = current_fen;
-
-    // return current_fen;
+  /**
+   * Find where the king is.
+   * Used as a helper function in mate detection, etc
+   */
+  findKingSq(side) {
+    let king_sq = null;
+    for (var i = 0; i < this.area.length; i++) {
+      // find the king
+      if (this.area[i].piece == PIECES.KING && this.area[i].color == side) {
+        king_sq = i;
+        break;
+      }
+    }
+    return king_sq;
   }
 
   /*
-   * Gets the number of available squares to move to for each side
-   *
+   * Gets the material count for a given side.
+   * Pawn is 1, Knight / Bishop are 3 / 3.5, Rook is 5, Queen is 9
    */
-  getMobility() {}
+  getMaterialCount() {
+    // keep track of the score
+    let score = 0;
+
+    // loop through the board
+    for (let i = 0; i < this.area.length; i++) {
+      // get current square
+      const sq = this.area[i];
+
+      // add the piece value from the SCORES object if square color is white else subtract it
+      if (sq.color == COLORS.WHITE) {
+        score += SCORES[sq.piece];
+      } else if (sq.color == COLORS.BLACK) {
+        score -= SCORES[sq.piece];
+      }
+    }
+
+    return score;
+  }
+
+  /* =============== TO REFACTOR ====================== */
 
   /*
    * Gets the number of pieces being attacked
@@ -366,66 +401,6 @@ class Board {
     var sq_attacking = squaresAttacked();
     this.side ^= 1;
     return sq_attacking;
-  }
-
-  /*
-   * Gets the material count for a given side.
-   * Pawn is 1, Knight / Bishop are 3, Rook is 5, Queen is 9
-   */
-  getMaterialCount() {
-    var score = 0;
-
-    for (var i = 0; i < this.area.length; i++) {
-      if (this.area[i].color == COLORS.WHITE) {
-        switch (this.area[i].piece) {
-          case PIECES.PAWN:
-            score += SCORES.PAWN;
-            break;
-          case PIECES.KNIGHT:
-            score += SCORES.KNIGHT;
-            break;
-          case PIECES.BISHOP:
-            score += SCORES.BISHOP;
-            break;
-          case PIECES.ROOK:
-            score += SCORES.ROOK;
-            break;
-          case PIECES.QUEEN:
-            score += SCORES.QUEEN;
-            break;
-          case PIECES.KING:
-            score += SCORES.KING;
-            break;
-          default:
-            break;
-        }
-      } else if (this.area[i].color == COLORS.BLACK) {
-        switch (this.area[i].piece) {
-          case PIECES.PAWN:
-            score -= SCORES.PAWN;
-            break;
-          case PIECES.KNIGHT:
-            score -= SCORES.KNIGHT;
-            break;
-          case PIECES.BISHOP:
-            score -= SCORES.BISHOP;
-            break;
-          case PIECES.ROOK:
-            score -= SCORES.ROOK;
-            break;
-          case PIECES.QUEEN:
-            score -= SCORES.QUEEN;
-            break;
-          case PIECES.KING:
-            score -= SCORES.KING;
-            break;
-          default:
-            break;
-        }
-      }
-    }
-
-    return score;
   }
 
   /**
@@ -673,6 +648,7 @@ class Board {
   }
   /**
    * Generates a list of moves for the side to move.
+   * TODO: en-passant (essentially, create a new state in Board and change this state if moved played is this.)
    */
   generateMoveList() {
     var move_list = [];
@@ -725,12 +701,15 @@ class Board {
    * @return which squares are attacked
    */
   squaresAttacked(observer = false) {
+    // check opponent's moves (if observer is false), else check player moves
     if (!observer) this.side ^= 1;
-    var move_list = this.generateMoveList();
+    const move_list = this.generateMoveList();
     if (!observer) this.side ^= 1;
 
+    // keep track of squares attacked
     var squares_attacked = [];
 
+    // add the 'to' square attacked of each move to squares_attacked
     if (move_list.length > 0) {
       for (var move in move_list) {
         squares_attacked.push(move_list[move][1]);
@@ -738,21 +717,6 @@ class Board {
     }
 
     return squares_attacked;
-  }
-
-  /**
-   * Find where the king is.
-   * Used as a helper function in mate detection, etc
-   */
-  findKingSq(side) {
-    var king_sq = null;
-    for (var i = 0; i < this.area.length; i++) {
-      // find the king
-      if (this.area[i].piece == PIECES.KING && this.area[i].color == side) {
-        king_sq = i;
-      }
-    }
-    return king_sq;
   }
 
   /**
@@ -806,8 +770,6 @@ class Board {
 
     return this.sqAttacked(king_sq);
   }
-
-  findPiece() {}
 
   // TODO: stalemate
   /**
@@ -1452,86 +1414,13 @@ class Board {
       }
     }
   }
-
-  /**
-   * Print the state of the board.
-   */
-  printBoard() {
-    var board_pic = "";
-    var rank = 0;
-    for (var i = 0; i < this.area.length; i++) {
-      var sq = this.area[i];
-
-      if (!sq.offboard) {
-        switch (sq.piece) {
-          case PIECES.EMPTY:
-            board_pic += "-  ";
-            break;
-          case PIECES.KING:
-            if (sq.color == COLORS.WHITE) {
-              board_pic += "K ";
-            } else {
-              board_pic += "k ";
-            }
-            break;
-          case PIECES.ROOK:
-            if (sq.color == COLORS.WHITE) {
-              board_pic += "R ";
-            } else {
-              board_pic += "r ";
-            }
-            break;
-          case PIECES.KNIGHT:
-            if (sq.color == COLORS.WHITE) {
-              board_pic += "N ";
-            } else {
-              board_pic += "n ";
-            }
-            break;
-          case PIECES.BISHOP:
-            if (sq.color == COLORS.WHITE) {
-              board_pic += "B ";
-            } else {
-              board_pic += "b ";
-            }
-            break;
-          case PIECES.PAWN:
-            if (sq.color == COLORS.WHITE) {
-              board_pic += "P ";
-            } else {
-              board_pic += "p ";
-            }
-            break;
-          case PIECES.QUEEN:
-            if (sq.color == COLORS.WHITE) {
-              board_pic += "Q ";
-            } else {
-              board_pic += "q ";
-            }
-            break;
-          default:
-            break;
-        }
-        rank += 1;
-      }
-      if (rank % 4 == 0) {
-        board_pic += "\n";
-      }
-    }
-
-    console.log(board_pic);
-  }
-
-  /**
-   * Returns a square name from location in gameBoard.area.
-   * @param {number} sq - the square to find
-   * @return the square (lowercase)
-   */
-  printSq(sq) {
-    for (var val in SQUARES) {
-      if (SQUARES[val] == sq) {
-        return val.toLowerCase();
-      }
-    }
-  }
 }
+
+/* ================== TO ADD ================ */
+/*
+ * Gets the number of available squares to move to for each side
+ *
+ */
+// getMobility() {}
+
+//   findPiece() {}
